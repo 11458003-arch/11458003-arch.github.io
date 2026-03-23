@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>打地鼠 3x3 中文版</title>
+  <style>
+    :root {
+      --bg-sky: #9ed8ff;
+      --bg-sun: #ffd454;
+      --bg-hill-1: #37c85f;
+      --bg-hill-2: #2ea751;
+      --hud: #0f5b88;
+      --hud-soft: #1876ab;
+      --panel: #f8fff2;
+      --text-main: #12212e;
+      --hole-out: #9d643a;
+      --hole-in: #794a2b;
+      --hit: #1ca57a;
+      --miss: #d74444;
+      --warning: #ef8d2f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Segoe UI", "Microsoft JhengHei", sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 75% 18%, var(--bg-sun) 0 7%, transparent 7.5%),
+        linear-gradient(180deg, #a8e0ff 0%, var(--bg-sky) 45%, #b8f3ff 100%);
+      overflow: hidden;
+    }
+
+    .hill {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hill.back {
+      width: min(96vw, 1300px);
+      height: min(70vh, 780px);
+      bottom: -42vh;
+      background: var(--bg-hill-2);
+    }
+
+    .hill.front {
+      width: min(90vw, 1120px);
+      height: min(64vh, 700px);
+      bottom: -36vh;
+      background: var(--bg-hill-1);
+      filter: saturate(1.06);
+    }
+
+    .game-wrap {
+      position: relative;
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 16px;
+      z-index: 1;
+    }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+      background: linear-gradient(145deg, var(--hud), var(--hud-soft));
+      color: #f0f9ff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.22);
+    }
+
+    .hud-card {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .hud-card .label {
+      font-size: 0.8rem;
+      opacity: 0.9;
+      letter-spacing: 0.05em;
+    }
+
+    .hud-card .value {
+      margin-top: 4px;
+      font-size: clamp(1rem, 2.2vw, 1.35rem);
+      font-weight: 700;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+      transition: transform 0.15s ease, filter 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    .start-btn {
+      background: #ffe36a;
+      color: #3f2a00;
+    }
+
+    .mute-btn {
+      background: #e9f6ff;
+      color: #12456d;
+    }
+
+    .arena {
+      margin: 10px auto 0;
+      width: min(960px, 100%);
+      padding: clamp(12px, 3vw, 22px);
+      border-radius: 16px;
+      background: color-mix(in oklab, var(--panel) 75%, #ffffff);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.18);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(10px, 2.2vw, 18px);
+    }
+
+    .hole {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.5 / 1;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    .hole::before,
+    .hole::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 50%;
+    }
+
+    .hole::before {
+      width: 82%;
+      height: 45%;
+      bottom: 23%;
+      background: var(--hole-out);
+      box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.08);
+    }
+
+    .hole::after {
+      width: 62%;
+      height: 30%;
+      bottom: 30%;
+      background: var(--hole-in);
+    }
+
+    .mole {
+      position: absolute;
+      left: 50%;
+      bottom: 34%;
+      transform: translate(-50%, 100%) scale(0.88);
+      width: 36%;
+      height: 56%;
+      opacity: 0;
+      transition: transform 0.14s ease, opacity 0.12s linear;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .mole::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 52%;
+      border-radius: 50%;
+      background: #ffd86e;
+    }
+
+    .mole::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 52%;
+      border-radius: 12px;
+      background: #ff6d57;
+    }
+
+    .mole .face {
+      position: absolute;
+      width: 100%;
+      height: 52%;
+      top: 2%;
+      left: 0;
+      z-index: 2;
+    }
+
+    .mole .face::before,
+    .mole .face::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #1d1207;
+      top: 37%;
+    }
+
+    .mole .face::before { left: 35%; }
+    .mole .face::after { right: 35%; }
+
+    .hole.active .mole {
+      opacity: 1;
+      transform: translate(-50%, -10%) scale(1);
+      pointer-events: auto;
+    }
+
+    .status {
+      margin-top: 12px;
+      text-align: center;
+      min-height: 24px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #20435a;
+    }
+
+    .status.hit { color: var(--hit); }
+    .status.miss { color: var(--miss); }
+    .status.warn { color: var(--warning); }
+
+    .ranking {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(18, 73, 109, 0.15);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .ranking h3 {
+      font-size: 1rem;
+      color: #12496d;
+      margin-bottom: 8px;
+    }
+
+    .ranking-list {
+      list-style: decimal inside;
+      display: grid;
+      gap: 4px;
+      font-size: 0.95rem;
+      color: #1d3f57;
+      min-height: 60px;
+    }
+
+    .ranking-empty {
+      color: #5e7c91;
+      font-size: 0.9rem;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 24, 36, 0.55);
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 20;
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .panel {
+      width: min(480px, 92vw);
+      background: #fdfefb;
+      border-radius: 16px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28);
+    }
+
+    .panel h2 {
+      color: #0e4b6f;
+      font-size: clamp(1.3rem, 3vw, 1.9rem);
+      margin-bottom: 10px;
+    }
+
+    .panel p {
+      margin: 7px 0;
+      font-size: 1.05rem;
+    }
+
+    @media (max-width: 860px) {
+      .hud {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .mole .face::before,
+      .mole .face::after {
+        width: 6px;
+        height: 6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hill back" aria-hidden="true"></div>
+  <div class="hill front" aria-hidden="true"></div>
+
+  <main class="game-wrap">
+    <section class="hud">
+      <div class="hud-card"><div class="label">等級</div><div class="value" id="level">1</div></div>
+      <div class="hud-card"><div class="label">剩餘時間</div><div class="value" id="time">30</div></div>
+      <div class="hud-card"><div class="label">分數</div><div class="value" id="score">0</div></div>
+      <div class="hud-card"><div class="label">命中</div><div class="value" id="hit">0</div></div>
+      <div class="hud-card"><div class="label">失誤</div><div class="value" id="miss">0</div></div>
+      <div class="hud-card"><div class="label">連擊</div><div class="value" id="combo">x1</div></div>
+      <div class="hud-card"><div class="label">最高分</div><div class="value" id="best">0</div></div>
+    </section>
+
+    <div class="actions">
+      <button class="start-btn" id="startBtn">開始 30 秒挑戰</button>
+      <button class="mute-btn" id="muteBtn">音效：開啟</button>
+      <button class="mute-btn" id="bgmBtn">音樂：開啟</button>
+    </div>
+
+    <section class="arena" id="arena">
+      <div class="grid" id="grid"></div>
+      <div class="status" id="status">3x3 九宮格，按下「開始 30 秒挑戰」</div>
+      <section class="ranking" aria-label="排行榜">
+        <h3>歷史排行榜（前 5 名）</h3>
+        <ol class="ranking-list" id="rankingList"></ol>
+      </section>
+    </section>
+  </main>
+
+  <div class="overlay" id="resultOverlay" aria-hidden="true">
+    <div class="panel">
+      <h2>時間到</h2>
+      <p id="finalScore">總分：0</p>
+      <p id="finalStats">命中 0 次，失誤 0 次</p>
+      <p id="finalBest">最高分：0</p>
+      <p>再按一次開始即可重玩</p>
+    </div>
+  </div>
+
+  <script>
+    const GRID_SIZE = 3;
+    const GAME_TIME = 30;
+    const HIT_SCORE = 10;
+    const MISS_SCORE = -5;
+    const OUTSIDE_SCORE = -2;
+    const SCORE_STORAGE_KEY = "whack3x3_scores_v1";
+
+    const grid = document.getElementById("grid");
+    const arena = document.getElementById("arena");
+    const startBtn = document.getElementById("startBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const bgmBtn = document.getElementById("bgmBtn");
+    const statusEl = document.getElementById("status");
+    const overlay = document.getElementById("resultOverlay");
+
+    const levelEl = document.getElementById("level");
+    const timeEl = document.getElementById("time");
+    const scoreEl = document.getElementById("score");
+    const hitEl = document.getElementById("hit");
+    const missEl = document.getElementById("miss");
+    const comboEl = document.getElementById("combo");
+    const bestEl = document.getElementById("best");
+    const rankingListEl = document.getElementById("rankingList");
+    const finalScoreEl = document.getElementById("finalScore");
+    const finalStatsEl = document.getElementById("finalStats");
+    const finalBestEl = document.getElementById("finalBest");
+
+    const holes = [];
+    let score = 0;
+    let hits = 0;
+    let misses = 0;
+    let combo = 0;
+    let remain = GAME_TIME;
+    let activeHole = -1;
+    let running = false;
+    let countdownTimer = null;
+    let popTimer = null;
+    let sfxMuted = false;
+    let bgmMuted = false;
+    let scoreHistory = [];
+
+    let audioCtx;
+    let bgmInterval;
+    let bgmStep = 0;
+
+    function loadScores() {
+      try {
+        const raw = localStorage.getItem(SCORE_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+        scoreHistory = parsed.filter((n) => Number.isFinite(n)).map((n) => Number(n));
+        scoreHistory.sort((a, b) => b - a);
+        scoreHistory = scoreHistory.slice(0, 5);
+      } catch (_) {
+        scoreHistory = [];
+      }
+    }
+
+    function saveScores() {
+      localStorage.setItem(SCORE_STORAGE_KEY, JSON.stringify(scoreHistory.slice(0, 5)));
+    }
+
+    function renderRanking() {
+      rankingListEl.innerHTML = "";
+      if (scoreHistory.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "ranking-empty";
+        empty.textContent = "尚無紀錄，先玩一局吧";
+        rankingListEl.appendChild(empty);
+        bestEl.textContent = "0";
+        return;
+      }
+
+      scoreHistory.forEach((value) => {
+        const li = document.createElement("li");
+        li.textContent = `${value} 分`;
+        rankingListEl.appendChild(li);
+      });
+      bestEl.textContent = String(scoreHistory[0]);
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function beep(freq, duration = 0.1, volume = 0.12, type = "sine", bypassSfxMute = false) {
+      if (sfxMuted && !bypassSfxMute) return;
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + duration);
+    }
+
+    function playChord(notes, duration = 0.15, volume = 0.06, type = "triangle", bypassSfxMute = false) {
+      notes.forEach((n) => beep(n, duration, volume, type, bypassSfxMute));
+    }
+
+    function playBgmStep() {
+      if (!running || bgmMuted) return;
+      const verse = [261.6, 329.6, 392.0, 329.6, 440.0, 392.0, 329.6, 293.7];
+      const chorus = [392.0, 440.0, 523.2, 440.0, 587.3, 523.2, 440.0, 392.0];
+      const seq = remain <= 12 ? chorus : verse;
+      const freq = seq[bgmStep % seq.length];
+      beep(freq, 0.115, 0.032, "triangle", true);
+      bgmStep += 1;
+    }
+
+    function startBgm() {
+      clearInterval(bgmInterval);
+      bgmStep = 0;
+      bgmInterval = setInterval(playBgmStep, 180);
+    }
+
+    function stopBgm() {
+      clearInterval(bgmInterval);
+    }
+
+    function setStatus(text, type = "") {
+      statusEl.textContent = text;
+      statusEl.className = "status" + (type ? " " + type : "");
+    }
+
+    function updateHud() {
+      levelEl.textContent = "1 (3x3)";
+      timeEl.textContent = remain;
+      scoreEl.textContent = score;
+      hitEl.textContent = hits;
+      missEl.textContent = misses;
+      comboEl.textContent = `x${Math.max(1, combo)}`;
+    }
+
+    function hideMole() {
+      if (activeHole >= 0) {
+        holes[activeHole].classList.remove("active");
+        activeHole = -1;
+      }
+    }
+
+    function popMole() {
+      if (!running) return;
+      hideMole();
+      activeHole = Math.floor(Math.random() * holes.length);
+      holes[activeHole].classList.add("active");
+      beep(520, 0.05, 0.045, "triangle");
+      const speedUp = remain <= 10 ? 0.72 : remain <= 20 ? 0.86 : 1;
+      const nextDelay = (380 + Math.random() * 520) * speedUp;
+      popTimer = setTimeout(popMole, nextDelay);
+    }
+
+    function onHit() {
+      const bonus = Math.min(combo, 8);
+      score += HIT_SCORE + bonus;
+      hits += 1;
+      combo += 1;
+      hideMole();
+      beep(880, 0.08, 0.16, "square");
+      setStatus(`命中 +${HIT_SCORE + bonus}`, "hit");
+      updateHud();
+    }
+
+    function onMissHole() {
+      score += MISS_SCORE;
+      misses += 1;
+      combo = 0;
+      beep(210, 0.12, 0.11, "sawtooth");
+      setStatus(`失誤 ${MISS_SCORE}`, "miss");
+      updateHud();
+    }
+
+    function onMissOutside() {
+      score += OUTSIDE_SCORE;
+      combo = 0;
+      beep(160, 0.09, 0.09, "triangle");
+      setStatus(`亂點 ${OUTSIDE_SCORE}`, "warn");
+      updateHud();
+    }
+
+    function stopGame() {
+      running = false;
+      clearInterval(countdownTimer);
+      clearTimeout(popTimer);
+      hideMole();
+      stopBgm();
+      playChord([130, 196], 0.45, 0.1, "sine");
+
+      scoreHistory.push(score);
+      scoreHistory.sort((a, b) => b - a);
+      scoreHistory = scoreHistory.slice(0, 5);
+      saveScores();
+      renderRanking();
+
+      finalScoreEl.textContent = `總分：${score}`;
+      finalStatsEl.textContent = `命中 ${hits} 次，失誤 ${misses} 次`;
+      finalBestEl.textContent = `最高分：${scoreHistory[0] ?? 0}`;
+      overlay.classList.add("show");
+      overlay.setAttribute("aria-hidden", "false");
+      setStatus("本局結束，按開始可再玩", "warn");
+      startBtn.textContent = "再玩一次";
+    }
+
+    function resetGame() {
+      score = 0;
+      hits = 0;
+      misses = 0;
+      combo = 0;
+      remain = GAME_TIME;
+      overlay.classList.remove("show");
+      overlay.setAttribute("aria-hidden", "true");
+      updateHud();
+    }
+
+    function startGame() {
+      ensureAudio();
+      resetGame();
+      running = true;
+      startBtn.textContent = "遊戲進行中";
+      setStatus("快點擊冒出來的地鼠", "");
+      playChord([261.6, 329.6, 392.0], 0.12, 0.08, "square");
+      startBgm();
+      popMole();
+
+      countdownTimer = setInterval(() => {
+        remain -= 1;
+        updateHud();
+        if (remain <= 5 && remain > 0) {
+          beep(540, 0.06, 0.05, "triangle");
+        }
+        if (remain <= 0) {
+          stopGame();
+        }
+      }, 1000);
+    }
+
+    function createHoles() {
+      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i += 1) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "hole";
+        btn.dataset.index = i;
+
+        const mole = document.createElement("span");
+        mole.className = "mole";
+        const face = document.createElement("span");
+        face.className = "face";
+        mole.appendChild(face);
+
+        btn.appendChild(mole);
+        btn.addEventListener("click", () => {
+          if (!running) return;
+          const index = Number(btn.dataset.index);
+          if (index === activeHole) onHit();
+          else onMissHole();
+        });
+
+        holes.push(btn);
+        grid.appendChild(btn);
+      }
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!running) startGame();
+    });
+
+    muteBtn.addEventListener("click", () => {
+      sfxMuted = !sfxMuted;
+      muteBtn.textContent = sfxMuted ? "音效：關閉" : "音效：開啟";
+      setStatus(sfxMuted ? "音效已關閉" : "音效已開啟", "");
+    });
+
+    bgmBtn.addEventListener("click", () => {
+      bgmMuted = !bgmMuted;
+      bgmBtn.textContent = bgmMuted ? "音樂：關閉" : "音樂：開啟";
+      if (bgmMuted) {
+        stopBgm();
+      } else if (running) {
+        startBgm();
+      }
+      setStatus(bgmMuted ? "背景音樂已關閉" : "背景音樂已開啟", "");
+    });
+
+    arena.addEventListener("click", (event) => {
+      if (!running) return;
+      if (!event.target.closest(".hole")) {
+        onMissOutside();
+      }
+    });
+
+    createHoles();
+    loadScores();
+    renderRanking();
+    updateHud();
+  </script>
+</body>
+</html>
