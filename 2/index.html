@@ -107,6 +107,29 @@
 			filter: brightness(1.04);
 		}
 
+		.dpad {
+			margin-top: 14px;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 8px;
+			max-width: 220px;
+		}
+
+		.dpad-btn {
+			margin-top: 0;
+			padding: 10px;
+			font-size: 1.2rem;
+			line-height: 1;
+			touch-action: none;
+			user-select: none;
+			-webkit-user-select: none;
+		}
+
+		.dpad-btn.empty {
+			visibility: hidden;
+			pointer-events: none;
+		}
+
 		.status {
 			margin-top: 12px;
 			min-height: 22px;
@@ -159,6 +182,17 @@
 			</div>
 			<button id="restartBtn">重新開始</button>
 			<button id="soundBtn">音效：開啟</button>
+			<div class="dpad" aria-label="手機方向鍵">
+				<button class="dpad-btn empty" aria-hidden="true" tabindex="-1">·</button>
+				<button class="dpad-btn" data-dir="up" aria-label="上">↑</button>
+				<button class="dpad-btn empty" aria-hidden="true" tabindex="-1">·</button>
+				<button class="dpad-btn" data-dir="left" aria-label="左">←</button>
+				<button class="dpad-btn empty" aria-hidden="true" tabindex="-1">·</button>
+				<button class="dpad-btn" data-dir="right" aria-label="右">→</button>
+				<button class="dpad-btn empty" aria-hidden="true" tabindex="-1">·</button>
+				<button class="dpad-btn" data-dir="down" aria-label="下">↓</button>
+				<button class="dpad-btn empty" aria-hidden="true" tabindex="-1">·</button>
+			</div>
 			<div class="credit">設計者：林宜君</div>
 			<div id="status" class="status">吃到紅點即可加分</div>
 		</section>
@@ -174,6 +208,8 @@
 		const BASE_SPEED = 6;
 		const SPEED_STEP = 0.25;
 		const BEST_KEY = "snake_best_v1";
+		const DPAD_HOLD_INTERVAL = 90;
+		const BGM_INTERVAL_MS = 260;
 
 		const canvas = document.getElementById("board");
 		const ctx = canvas.getContext("2d");
@@ -183,6 +219,7 @@
 		const statusEl = document.getElementById("status");
 		const restartBtn = document.getElementById("restartBtn");
 		const soundBtn = document.getElementById("soundBtn");
+		const dpadButtons = document.querySelectorAll(".dpad-btn[data-dir]");
 
 		let snake;
 		let direction;
@@ -196,6 +233,9 @@
 		let lastTime = 0;
 		let soundEnabled = true;
 		let audioCtx;
+		let dpadHoldTimer = null;
+		let bgmTimer = null;
+		let bgmStep = 0;
 
 		function ensureAudio() {
 			if (!audioCtx) {
@@ -228,8 +268,21 @@
 		}
 
 		function playCrashSound() {
-			beep(220, 0.1, 0.08, "sawtooth");
-			beep(160, 0.16, 0.09, "triangle");
+			const notes = [
+				{ f: 659.25, d: 0.2, v: 0.06, t: "triangle", w: 0 },
+				{ f: 622.25, d: 0.2, v: 0.06, t: "triangle", w: 180 },
+				{ f: 587.33, d: 0.24, v: 0.065, t: "triangle", w: 360 },
+				{ f: 523.25, d: 0.24, v: 0.07, t: "triangle", w: 560 },
+				{ f: 493.88, d: 0.22, v: 0.065, t: "triangle", w: 760 },
+				{ f: 440.0, d: 0.34, v: 0.075, t: "triangle", w: 960 },
+				{ f: 392.0, d: 0.42, v: 0.08, t: "sine", w: 1180 }
+			];
+
+			notes.forEach((note) => {
+				setTimeout(() => {
+					beep(note.f, note.d, note.v, note.t);
+				}, note.w);
+			});
 		}
 
 		function playPauseSound(isPaused) {
@@ -243,6 +296,48 @@
 		function playRestartSound() {
 			beep(420, 0.07, 0.07, "triangle");
 			beep(560, 0.08, 0.07, "triangle");
+		}
+
+		function playCanonBgmStep() {
+			if (!soundEnabled || !audioCtx || paused || gameOver) return;
+
+			const progression = [
+				[261.63, 329.63, 392.0],
+				[196.0, 246.94, 392.0],
+				[220.0, 261.63, 329.63],
+				[164.81, 220.0, 329.63],
+				[174.61, 220.0, 349.23],
+				[130.81, 174.61, 261.63],
+				[146.83, 196.0, 293.66],
+				[196.0, 246.94, 329.63]
+			];
+
+			const chord = progression[bgmStep % progression.length];
+			const pick = bgmStep % 4;
+
+			if (pick === 0) {
+				beep(chord[0], 0.22, 0.032, "sine");
+			} else if (pick === 1) {
+				beep(chord[1], 0.2, 0.028, "triangle");
+			} else if (pick === 2) {
+				beep(chord[2], 0.24, 0.03, "triangle");
+			} else {
+				beep(chord[1] * 2, 0.16, 0.022, "sine");
+			}
+
+			bgmStep += 1;
+		}
+
+		function startBgm() {
+			if (bgmTimer || !soundEnabled || !audioCtx || paused || gameOver) return;
+			bgmTimer = setInterval(playCanonBgmStep, BGM_INTERVAL_MS);
+		}
+
+		function stopBgm() {
+			if (bgmTimer) {
+				clearInterval(bgmTimer);
+				bgmTimer = null;
+			}
 		}
 
 		function loadBest() {
@@ -284,6 +379,7 @@
 		}
 
 		function resetGame() {
+			stopBgm();
 			snake = [
 				{ x: 10, y: 10 },
 				{ x: 9, y: 10 },
@@ -295,9 +391,11 @@
 			paused = false;
 			gameOver = false;
 			accumulator = 0;
+			bgmStep = 0;
 			spawnFood();
 			updateHud();
 			setStatus("吃到紅點即可加分");
+			startBgm();
 		}
 
 		function hitWall(head) {
@@ -319,6 +417,7 @@
 
 			if (hitWall(head) || hitSelf(head)) {
 				gameOver = true;
+				stopBgm();
 				playCrashSound();
 				setStatus("遊戲結束，按重新開始再玩一次", true);
 				return;
@@ -412,6 +511,30 @@
 			nextDirection = newDir;
 		}
 
+		function applyDirectionByName(dirName) {
+			if (dirName === "up") handleDirection({ x: 0, y: -1 });
+			if (dirName === "down") handleDirection({ x: 0, y: 1 });
+			if (dirName === "left") handleDirection({ x: -1, y: 0 });
+			if (dirName === "right") handleDirection({ x: 1, y: 0 });
+		}
+
+		function stopDpadHold() {
+			if (dpadHoldTimer) {
+				clearInterval(dpadHoldTimer);
+				dpadHoldTimer = null;
+			}
+		}
+
+		function startDpadHold(dirName, event) {
+			event.preventDefault();
+			ensureAudio();
+			applyDirectionByName(dirName);
+			stopDpadHold();
+			dpadHoldTimer = setInterval(() => {
+				applyDirectionByName(dirName);
+			}, DPAD_HOLD_INTERVAL);
+		}
+
 		window.addEventListener("keydown", (event) => {
 			const key = event.key.toLowerCase();
 			if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " ", "m"].includes(key)) {
@@ -425,6 +548,11 @@
 				soundEnabled = !soundEnabled;
 				soundBtn.textContent = soundEnabled ? "音效：開啟" : "音效：關閉";
 				setStatus(soundEnabled ? "音效已開啟" : "音效已關閉");
+				if (soundEnabled) {
+					startBgm();
+				} else {
+					stopBgm();
+				}
 				return;
 			}
 
@@ -432,6 +560,11 @@
 				paused = !paused;
 				playPauseSound(paused);
 				setStatus(paused ? "已暫停，按空白鍵繼續" : "繼續遊戲");
+				if (paused) {
+					stopBgm();
+				} else {
+					startBgm();
+				}
 				return;
 			}
 
@@ -454,7 +587,23 @@
 			setStatus(soundEnabled ? "音效已開啟" : "音效已關閉");
 			if (soundEnabled) {
 				beep(600, 0.06, 0.06, "triangle");
+				startBgm();
+			} else {
+				stopBgm();
 			}
+		});
+
+		dpadButtons.forEach((btn) => {
+			const moveOnce = (event) => {
+				event.preventDefault();
+				ensureAudio();
+				applyDirectionByName(btn.dataset.dir);
+			};
+			btn.addEventListener("click", moveOnce);
+			btn.addEventListener("pointerdown", (event) => startDpadHold(btn.dataset.dir, event));
+			btn.addEventListener("pointerup", stopDpadHold);
+			btn.addEventListener("pointercancel", stopDpadHold);
+			btn.addEventListener("pointerleave", stopDpadHold);
 		});
 
 		loadBest();
