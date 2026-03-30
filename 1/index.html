@@ -5,40 +5,529 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>打地鼠 | 宜君作品</title>
   <style>
+    :root {
+      --bg1: #9be15d;
+      --bg2: #00c47d;
+      --wood: #7d4f2f;
+      --wood-dark: #5a371f;
+      --grass-dark: #2f8f42;
+      --panel: rgba(255, 255, 255, 0.9);
+      --ink: #1f2a23;
+      --accent: #ff9f1c;
+      --danger: #ff4f4f;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
       display: grid;
       place-items: center;
+      padding: 16px;
       font-family: "Noto Sans TC", sans-serif;
-      background: linear-gradient(145deg, #fff3e5, #f2f8ee);
-      color: #213227;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.38), transparent 40%),
+        radial-gradient(circle at 80% 10%, rgba(255, 255, 255, 0.2), transparent 36%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
     }
 
-    .panel {
-      width: min(520px, 92vw);
-      padding: 28px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.86);
-      border: 1px solid rgba(33, 50, 39, 0.14);
-      text-align: center;
+    .game {
+      width: min(760px, 96vw);
+      padding: 20px;
+      border-radius: 22px;
+      background: var(--panel);
+      border: 2px solid rgba(31, 42, 35, 0.18);
+      box-shadow: 0 20px 40px rgba(18, 56, 31, 0.24);
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
 
     h1 {
-      margin-top: 0;
+      margin: 0;
+      font-size: clamp(1.4rem, 3.4vw, 2rem);
+      letter-spacing: 0.04em;
     }
 
-    a {
-      color: #2f6a52;
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: #f7fff8;
+      border: 1px solid rgba(31, 42, 35, 0.12);
+      border-radius: 12px;
+      padding: 8px 12px;
       font-weight: 700;
+      min-width: 110px;
+      text-align: center;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 6px 0 16px;
+    }
+
+    button,
+    .link-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    button:active,
+    .link-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .start {
+      background: linear-gradient(145deg, var(--accent), #ffbe55);
+      color: #2d1b00;
+    }
+
+    .toggle {
+      background: #e9f8ec;
+      color: #21412c;
+      border: 1px solid rgba(31, 42, 35, 0.14);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(86px, 1fr));
+      gap: 16px;
+      padding: 14px;
+      border-radius: 16px;
+      background:
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.32), transparent 30%),
+        linear-gradient(to top, rgba(47, 143, 66, 0.22), transparent 35%),
+        #78d35a;
+      border: 2px solid rgba(47, 109, 52, 0.35);
+    }
+
+    .hole {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border-radius: 18px;
+      background: linear-gradient(to bottom, #95df78, #60ba4a);
+      overflow: hidden;
+      border: 1px solid rgba(26, 70, 37, 0.24);
+    }
+
+    .pit {
+      position: absolute;
+      left: 10%;
+      width: 80%;
+      bottom: 8%;
+      height: 22%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 40%, #2d1d11, #1f140d 60%, #130d08);
+      box-shadow: 0 8px 0 var(--wood), 0 12px 0 var(--wood-dark);
+    }
+
+    .mole {
+      position: absolute;
+      left: 50%;
+      width: 56%;
+      bottom: 14%;
+      transform: translate(-50%, 85%);
+      transition: transform 0.15s ease;
+      user-select: none;
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      line-height: 1;
+      filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.24));
+      cursor: pointer;
+    }
+
+    .hole.active .mole {
+      transform: translate(-50%, 0);
+    }
+
+    .hole.hit .mole {
+      animation: blast 0.22s ease forwards;
+    }
+
+    @keyframes blast {
+      0% {
+        transform: translate(-50%, 0) scale(1) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -22px) scale(1.55) rotate(14deg);
+        opacity: 0;
+      }
+    }
+
+    .msg {
+      margin-top: 12px;
+      min-height: 1.6em;
+      font-weight: 700;
+      color: #1d4f2d;
+    }
+
+    .msg.warn {
+      color: var(--danger);
+    }
+
+    .footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .link-btn {
+      text-decoration: none;
+      display: inline-block;
+      background: #f0f5ff;
+      color: #27407a;
+      border: 1px solid rgba(39, 64, 122, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .board {
+        gap: 11px;
+      }
+
+      .game {
+        padding: 14px;
+      }
+
+      .stat {
+        min-width: 94px;
+        padding: 7px 10px;
+      }
     }
   </style>
 </head>
 <body>
-  <section class="panel">
-    <h1>打地鼠</h1>
-    <p>這個頁面已建立完成，之後可以在這裡放入你的打地鼠遊戲程式。</p>
-    <p><a href="../index.html">回到首頁作品集</a></p>
+  <section class="game" aria-label="Whack a Mole Game">
+    <div class="top">
+      <h1>打地鼠</h1>
+      <div class="stats">
+        <div class="stat">分數: <span id="score">0</span></div>
+        <div class="stat">時間: <span id="time">30</span>s</div>
+        <div class="stat">最高: <span id="best">0</span></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="start" type="button">開始遊戲</button>
+      <button id="musicBtn" class="toggle" type="button">音樂: 開</button>
+      <button id="sfxBtn" class="toggle" type="button">音效: 開</button>
+    </div>
+
+    <div class="board" id="board">
+      <div class="hole" data-index="0"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="1"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="2"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="3"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="4"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="5"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="6"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="7"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+      <div class="hole" data-index="8"><div class="mole" role="button" tabindex="0" aria-label="地鼠">🐹</div><div class="pit"></div></div>
+    </div>
+
+    <p id="msg" class="msg">點「開始遊戲」後，地鼠會出現，打到就會有爆炸聲。</p>
+
+    <div class="footer">
+      <small>提示: 手機與電腦都可玩，鍵盤 Enter/空白 也能敲地鼠。</small>
+      <a class="link-btn" href="../index.html">回首頁</a>
+    </div>
   </section>
+
+  <script>
+    const holes = [...document.querySelectorAll(".hole")];
+    const moles = [...document.querySelectorAll(".mole")];
+    const scoreEl = document.getElementById("score");
+    const timeEl = document.getElementById("time");
+    const bestEl = document.getElementById("best");
+    const msgEl = document.getElementById("msg");
+    const startBtn = document.getElementById("startBtn");
+    const musicBtn = document.getElementById("musicBtn");
+    const sfxBtn = document.getElementById("sfxBtn");
+
+    let score = 0;
+    let timeLeft = 30;
+    let gameRunning = false;
+    let timerId = null;
+    let spawnId = null;
+    let activeIndex = -1;
+    let best = Number(localStorage.getItem("mole-best") || 0);
+
+    let musicEnabled = true;
+    let sfxEnabled = true;
+
+    let audioCtx = null;
+    let musicTimer = null;
+    let musicStep = 0;
+
+    const notes = [261.63, 329.63, 392.0, 329.63, 349.23, 440.0, 392.0, 329.63];
+
+    bestEl.textContent = String(best);
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new window.AudioContext();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function beep(freq, duration, type, volume, whenOffset = 0) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime + whenOffset;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(volume, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playMusicStep() {
+      if (!musicEnabled || !audioCtx) return;
+      const n1 = notes[musicStep % notes.length];
+      const n2 = notes[(musicStep + 2) % notes.length] / 2;
+      beep(n1, 0.18, "triangle", 0.06);
+      beep(n2, 0.22, "sine", 0.045, 0.02);
+      musicStep += 1;
+    }
+
+    function startMusic() {
+      if (musicTimer) clearInterval(musicTimer);
+      if (!musicEnabled) return;
+      playMusicStep();
+      musicTimer = setInterval(playMusicStep, 260);
+    }
+
+    function stopMusic() {
+      if (musicTimer) {
+        clearInterval(musicTimer);
+        musicTimer = null;
+      }
+    }
+
+    function playExplosion() {
+      if (!audioCtx || !sfxEnabled) return;
+
+      const now = audioCtx.currentTime;
+      const sampleRate = audioCtx.sampleRate;
+      const duration = 0.12;
+      const frameCount = Math.floor(sampleRate * duration);
+      const buffer = audioCtx.createBuffer(1, frameCount, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < frameCount; i += 1) {
+        const decay = 1 - i / frameCount;
+        data[i] = (Math.random() * 2 - 1) * decay;
+      }
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(900, now);
+      filter.Q.value = 0.9;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.33, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      noise.start(now);
+      noise.stop(now + duration + 0.02);
+
+      beep(120, 0.09, "square", 0.07);
+    }
+
+    function randomIndex() {
+      let i = Math.floor(Math.random() * holes.length);
+      if (i === activeIndex) {
+        i = (i + 1) % holes.length;
+      }
+      return i;
+    }
+
+    function clearActive() {
+      holes.forEach((hole) => {
+        hole.classList.remove("active");
+        hole.classList.remove("hit");
+        hole.dataset.hit = "0";
+      });
+      activeIndex = -1;
+    }
+
+    function spawnMole() {
+      if (!gameRunning) return;
+      clearActive();
+      const idx = randomIndex();
+      const hole = holes[idx];
+      hole.classList.add("active");
+      hole.dataset.hit = "0";
+      activeIndex = idx;
+
+      const visibleTime = Math.max(400, 860 - (30 - timeLeft) * 12);
+      setTimeout(() => {
+        if (activeIndex === idx && hole.dataset.hit !== "1") {
+          hole.classList.remove("active");
+          activeIndex = -1;
+        }
+      }, visibleTime);
+    }
+
+    function updateStats() {
+      scoreEl.textContent = String(score);
+      timeEl.textContent = String(timeLeft);
+      bestEl.textContent = String(best);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      clearInterval(timerId);
+      clearInterval(spawnId);
+      timerId = null;
+      spawnId = null;
+      clearActive();
+
+      if (score > best) {
+        best = score;
+        localStorage.setItem("mole-best", String(best));
+        msgEl.textContent = "時間到，新紀錄! 你超強!";
+      } else {
+        msgEl.textContent = `時間到! 本次得分 ${score} 分。`;
+      }
+
+      msgEl.classList.remove("warn");
+      startBtn.textContent = "再玩一次";
+      updateStats();
+    }
+
+    function startGame() {
+      ensureAudio();
+      startMusic();
+
+      score = 0;
+      timeLeft = 30;
+      gameRunning = true;
+      msgEl.textContent = "開打! 地鼠冒出就敲下去!";
+      msgEl.classList.remove("warn");
+      startBtn.textContent = "遊戲中";
+
+      updateStats();
+      spawnMole();
+
+      if (timerId) clearInterval(timerId);
+      if (spawnId) clearInterval(spawnId);
+
+      timerId = setInterval(() => {
+        timeLeft -= 1;
+        if (timeLeft <= 5) {
+          msgEl.textContent = "倒數中，快打!";
+          msgEl.classList.add("warn");
+        }
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+        updateStats();
+      }, 1000);
+
+      spawnId = setInterval(() => {
+        spawnMole();
+      }, 520);
+    }
+
+    function hit(index) {
+      if (!gameRunning) return;
+      if (index !== activeIndex) return;
+
+      const hole = holes[index];
+      if (hole.dataset.hit === "1") return;
+
+      hole.dataset.hit = "1";
+      hole.classList.add("hit");
+      score += 1;
+      updateStats();
+      playExplosion();
+
+      setTimeout(() => {
+        hole.classList.remove("active");
+        hole.classList.remove("hit");
+        activeIndex = -1;
+      }, 160);
+    }
+
+    startBtn.addEventListener("click", () => {
+      if (!gameRunning) {
+        startGame();
+      }
+    });
+
+    musicBtn.addEventListener("click", () => {
+      musicEnabled = !musicEnabled;
+      musicBtn.textContent = `音樂: ${musicEnabled ? "開" : "關"}`;
+      if (!musicEnabled) {
+        stopMusic();
+      } else {
+        ensureAudio();
+        startMusic();
+      }
+    });
+
+    sfxBtn.addEventListener("click", () => {
+      sfxEnabled = !sfxEnabled;
+      sfxBtn.textContent = `音效: ${sfxEnabled ? "開" : "關"}`;
+      if (sfxEnabled) {
+        ensureAudio();
+        beep(600, 0.05, "sine", 0.08);
+      }
+    });
+
+    moles.forEach((mole, idx) => {
+      mole.addEventListener("click", () => hit(idx));
+      mole.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          hit(idx);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
