@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+  <title id="title">貪吃蛇縮圖</title>
+  <desc id="desc">可愛風格貪吃蛇遊戲縮圖</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f8e6"/>
+      <stop offset="100%" stop-color="#def0d7"/>
+    </linearGradient>
+    <linearGradient id="snake" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d6e06a"/>
+      <stop offset="100%" stop-color="#a6be44"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="600" fill="url(#bg)"/>
+
+  <g opacity="0.18" fill="#3a4c35">
+    <circle cx="140" cy="120" r="52"/>
+    <circle cx="850" cy="95" r="38"/>
+    <circle cx="820" cy="510" r="46"/>
+  </g>
+
+  <g fill="none" stroke="url(#snake)" stroke-width="92" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M170 420 C260 320, 390 470, 520 390 C620 330, 730 370, 785 430"/>
+    <path d="M530 392 C490 340, 495 275, 565 242 C637 208, 730 244, 756 314"/>
+  </g>
+
+  <ellipse cx="530" cy="248" rx="112" ry="96" fill="url(#snake)" stroke="#3a281e" stroke-width="14"/>
+  <ellipse cx="496" cy="232" rx="16" ry="18" fill="#2a1b15"/>
+  <ellipse cx="562" cy="232" rx="16" ry="18" fill="#2a1b15"/>
+  <path d="M500 276 Q530 300 560 276" fill="none" stroke="#2a1b15" stroke-width="10" stroke-linecap="round"/>
+  <path d="M530 278 q-10 18 -24 26" fill="none" stroke="#e26a52" stroke-width="6" stroke-linecap="round"/>
+  <path d="M530 278 q10 18 24 26" fill="none" stroke="#e26a52" stroke-width="6" stroke-linecap="round"/>
+
+  <rect x="106" y="84" width="36" height="36" rx="8" fill="#f3a64a"/>
+  <rect x="818" y="148" width="36" height="36" rx="8" fill="#f3a64a"/>
+  <rect x="766" y="474" width="36" height="36" rx="8" fill="#f3a64a"/>
+
+  <text x="62" y="86" font-family="Noto Sans TC, sans-serif" font-size="62" font-weight="700" fill="#213227">貪吃蛇</text>
+  <text x="62" y="138" font-family="Noto Sans TC, sans-serif" font-size="28" fill="#496055">Snake Game</text>
+</svg>

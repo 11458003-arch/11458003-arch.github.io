@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+  <title id="title">打地鼠縮圖</title>
+  <desc id="desc">木槌與地洞風格的打地鼠遊戲縮圖</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff3df"/>
+      <stop offset="100%" stop-color="#e9f4e8"/>
+    </linearGradient>
+    <linearGradient id="soil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b77a4f"/>
+      <stop offset="100%" stop-color="#7e4b2b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="600" fill="url(#bg)"/>
+
+  <g opacity="0.16" fill="#2d4338">
+    <circle cx="120" cy="110" r="45"/>
+    <circle cx="860" cy="70" r="36"/>
+    <circle cx="780" cy="510" r="52"/>
+  </g>
+
+  <ellipse cx="290" cy="430" rx="170" ry="78" fill="url(#soil)"/>
+  <ellipse cx="290" cy="430" rx="120" ry="52" fill="#3f281a"/>
+
+  <ellipse cx="660" cy="430" rx="170" ry="78" fill="url(#soil)"/>
+  <ellipse cx="660" cy="430" rx="120" ry="52" fill="#3f281a"/>
+
+  <g transform="translate(590 120) rotate(24)">
+    <rect x="0" y="92" width="170" height="30" rx="15" fill="#925c38"/>
+    <rect x="146" y="42" width="150" height="128" rx="24" fill="#d48950"/>
+    <rect x="157" y="58" width="126" height="96" rx="18" fill="#be6d3d"/>
+  </g>
+
+  <g transform="translate(190 250)">
+    <circle cx="120" cy="80" r="66" fill="#8d6043"/>
+    <circle cx="98" cy="66" r="10" fill="#1f150f"/>
+    <circle cx="142" cy="66" r="10" fill="#1f150f"/>
+    <ellipse cx="120" cy="96" rx="18" ry="14" fill="#f6d8b6"/>
+    <path d="M96 118 Q120 136 144 118" fill="none" stroke="#2b1b12" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <text x="64" y="92" font-family="Noto Sans TC, sans-serif" font-size="64" font-weight="700" fill="#213227">打地鼠</text>
+  <text x="64" y="146" font-family="Noto Sans TC, sans-serif" font-size="28" fill="#496055">Whac-A-Mole</text>
+</svg>
