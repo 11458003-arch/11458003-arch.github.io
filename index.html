@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>宜君 | 遊戲作品集</title>
+  <meta name="description" content="宜君的遊戲作品集：打地鼠與貪吃蛇。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #f4efe6;
+      --bg-2: #e5f0e0;
+      --ink: #1e2a23;
+      --muted: #4c5f55;
+      --card: rgba(255, 255, 255, 0.78);
+      --line: rgba(30, 42, 35, 0.12);
+      --accent: #c55c2d;
+      --accent-2: #2f6a52;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 15% 0%, #fff8ef 0, transparent 40%),
+                  radial-gradient(circle at 85% 20%, #dcebd5 0, transparent 35%),
+                  linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      border-radius: 999px;
+      filter: blur(4px);
+      opacity: 0.55;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    body::before {
+      width: 280px;
+      height: 280px;
+      right: -80px;
+      top: -70px;
+      background: linear-gradient(135deg, #ef8f5e, #e8bd6e);
+    }
+
+    body::after {
+      width: 220px;
+      height: 220px;
+      left: -70px;
+      bottom: -60px;
+      background: linear-gradient(135deg, #5f9a7e, #a6d4b0);
+    }
+
+    .wrap {
+      width: min(980px, 92vw);
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+
+    .hero {
+      padding: 34px clamp(20px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: 0 12px 36px rgba(32, 46, 39, 0.12);
+      transform: translateY(18px);
+      opacity: 0;
+      animation: rise 0.9s ease forwards;
+      backdrop-filter: blur(2px);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(47, 106, 82, 0.28);
+      color: var(--accent-2);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      font-size: 0.88rem;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2.1rem, 5.4vw, 3.4rem);
+      line-height: 1.08;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.4vw, 1.08rem);
+      line-height: 1.75;
+      max-width: 62ch;
+    }
+
+    .section-title {
+      margin: 52px 0 16px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(1.8rem, 4.2vw, 2.4rem);
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 8px 24px rgba(30, 42, 35, 0.09);
+      transform: translateY(14px);
+      opacity: 0;
+      animation: rise 0.8s ease forwards;
+    }
+
+    .card:nth-child(1) {
+      animation-delay: 0.14s;
+    }
+
+    .card:nth-child(2) {
+      animation-delay: 0.26s;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.28rem;
+    }
+
+    .card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--accent), #cf7b38);
+      box-shadow: 0 8px 16px rgba(197, 92, 45, 0.24);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn.alt {
+      background: linear-gradient(135deg, var(--accent-2), #6f9f6b);
+      box-shadow: 0 8px 16px rgba(47, 106, 82, 0.24);
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 18px rgba(30, 42, 35, 0.2);
+    }
+
+    .footer {
+      margin-top: 42px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        padding-top: 28px;
+      }
+
+      .hero,
+      .card {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="tag">PORTFOLIO</span>
+      <h1>我是宜君，歡迎來到我的遊戲作品集</h1>
+      <p class="lead">
+        我喜歡把創意變成可以互動的小遊戲，從玩法設計到畫面呈現，
+        都希望讓玩家感受到「簡單、好玩、有節奏」。這裡收錄了我目前完成的兩個作品。
+      </p>
+    </section>
+
+    <h2 class="section-title">遊戲作品</h2>
+    <section class="grid" aria-label="遊戲作品列表">
+      <article class="card">
+        <h3>1. 打地鼠</h3>
+        <p>快速反應挑戰！在地鼠冒出來的瞬間擊中牠，看看你能拿下多少分。</p>
+        <a class="btn" href="1/index.html">前往遊玩</a>
+      </article>
+
+      <article class="card">
+        <h3>2. 貪吃蛇</h3>
+        <p>經典耐玩玩法，控制蛇不斷成長並閃避碰撞，挑戰你的最高紀錄。</p>
+        <a class="btn alt" href="2/index.html">前往遊玩</a>
+      </article>
+    </section>
+
+    <p class="footer">© 2026 宜君｜Game Portfolio</p>
+  </main>
+</body>
+</html>
