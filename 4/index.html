@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>工程計算機</title>
+  <style>
+    :root {
+      --bg-1: #0f172a;
+      --bg-2: #1d4ed8;
+      --panel: rgba(10, 15, 30, 0.82);
+      --panel-2: rgba(255, 255, 255, 0.08);
+      --text: #e5eefc;
+      --muted: #9fb3d9;
+      --line: rgba(255, 255, 255, 0.1);
+      --accent: #7dd3fc;
+      --accent-2: #fbbf24;
+      --danger: #fb7185;
+      --ok: #86efac;
+      --key: rgba(255, 255, 255, 0.08);
+      --key-hover: rgba(255, 255, 255, 0.14);
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Noto Sans TC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(125, 211, 252, 0.25), transparent 32%),
+        radial-gradient(circle at 85% 20%, rgba(251, 191, 36, 0.18), transparent 30%),
+        linear-gradient(160deg, var(--bg-1), #0b1020 52%, #13264f);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .wrap {
+      width: min(1020px, 100%);
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .hero,
+    .calc {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, var(--panel), rgba(8, 12, 24, 0.92));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero {
+      padding: 28px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(125, 211, 252, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(125, 211, 252, 0.22);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      font-size: 0.9rem;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-size: clamp(2.1rem, 4.4vw, 3.4rem);
+      line-height: 1.05;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.8;
+      max-width: 62ch;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .feature {
+      padding: 14px;
+      border-radius: 18px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .feature span {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+
+    .calc {
+      padding: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      font-weight: 800;
+      font-size: 1.12rem;
+      letter-spacing: 0.04em;
+    }
+
+    .mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+
+    .display {
+      padding: 18px 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+      border: 1px solid var(--line);
+      min-height: 118px;
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .expression {
+      min-height: 34px;
+      font-size: 1rem;
+      color: var(--muted);
+      word-break: break-word;
+      line-height: 1.6;
+    }
+
+    .result {
+      font-size: clamp(1.8rem, 4.8vw, 2.6rem);
+      font-weight: 800;
+      line-height: 1.1;
+      word-break: break-all;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid transparent;
+      background: var(--key);
+      color: var(--text);
+      border-radius: 16px;
+      min-height: 54px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:hover,
+    button:focus-visible {
+      background: var(--key-hover);
+      border-color: rgba(255, 255, 255, 0.14);
+      outline: none;
+      transform: translateY(-1px);
+    }
+
+    .op {
+      color: #dbeafe;
+      background: rgba(125, 211, 252, 0.12);
+    }
+
+    .func {
+      color: #e9d5ff;
+      background: rgba(167, 139, 250, 0.14);
+    }
+
+    .accent {
+      color: #082f49;
+      background: linear-gradient(135deg, var(--accent), #c0f2ff);
+    }
+
+    .danger {
+      color: #fff;
+      background: rgba(251, 113, 133, 0.18);
+      border-color: rgba(251, 113, 133, 0.2);
+    }
+
+    .wide {
+      grid-column: span 2;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .footer {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover,
+    a:focus-visible {
+      text-decoration: underline;
+      outline: none;
+    }
+
+    @media (max-width: 920px) {
+      .wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        order: 2;
+      }
+
+      .calc {
+        order: 1;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 10px;
+        place-items: stretch;
+      }
+
+      .wrap {
+        width: 100%;
+        gap: 12px;
+      }
+
+      .hero,
+      .calc {
+        border-radius: 18px;
+      }
+
+      .hero,
+      .calc {
+        padding: 14px;
+      }
+
+      .hero {
+        padding-bottom: 16px;
+      }
+
+      h1 {
+        margin-top: 12px;
+        font-size: clamp(1.8rem, 9vw, 2.4rem);
+      }
+
+      .lead {
+        font-size: 0.96rem;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .feature {
+        padding: 12px;
+      }
+
+      .calc {
+        padding: 12px;
+      }
+
+      .topbar {
+        margin-bottom: 12px;
+      }
+
+      .display {
+        padding: 14px 12px;
+        min-height: 102px;
+        margin-bottom: 12px;
+      }
+
+      .expression {
+        font-size: 0.95rem;
+      }
+
+      .result {
+        font-size: clamp(1.5rem, 8vw, 2.1rem);
+      }
+
+      .keys {
+        gap: 7px;
+      }
+
+      button {
+        min-height: 58px;
+        border-radius: 14px;
+        font-size: 1.02rem;
+      }
+
+      .hint,
+      .footer {
+        font-size: 0.88rem;
+      }
+    }
+
+    @media (hover: none) {
+      button:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="badge">工程用計算機</div>
+      <h1>有函數的工程計算機</h1>
+      <p class="lead">
+        支援基本四則運算、括號、冪次、三角函數、反三角函數、對數、自然對數、平方根、絕對值與常數 π、e。
+        可切換角度模式，適合課堂示範與日常計算。
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <strong>函數</strong>
+          <span>sin、cos、tan、asin、acos、atan、log、ln、sqrt、abs</span>
+        </div>
+        <div class="feature">
+          <strong>模式</strong>
+          <span>DEG / RAD 切換，符合工程計算常用角度設定</span>
+        </div>
+        <div class="feature">
+          <strong>操作</strong>
+          <span>支援刪除、清除、Ans 以及鍵盤輸入</span>
+        </div>
+        <div class="feature">
+          <strong>用途</strong>
+          <span>可直接開啟使用，不需要額外函式庫</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="calc" aria-label="工程計算機">
+      <div class="topbar">
+        <div class="title">Scientific Calculator</div>
+        <div class="mode">角度模式：<span id="angleMode">DEG</span></div>
+      </div>
+
+      <div class="display" aria-live="polite">
+        <div id="expression" class="expression"></div>
+        <div id="result" class="result">0</div>
+        <div class="sub" id="status">可直接輸入算式</div>
+      </div>
+
+      <div class="keys">
+        <button class="danger" data-action="clear">C</button>
+        <button class="danger" data-action="back">⌫</button>
+        <button class="func" data-insert="(">(</button>
+        <button class="func" data-insert=")">)</button>
+
+        <button class="func" data-insert="sin(">sin</button>
+        <button class="func" data-insert="cos(">cos</button>
+        <button class="func" data-insert="tan(">tan</button>
+        <button class="op" data-action="toggle-angle">DEG/RAD</button>
+
+        <button class="func" data-insert="asin(">asin</button>
+        <button class="func" data-insert="acos(">acos</button>
+        <button class="func" data-insert="atan(">atan</button>
+        <button class="op" data-insert="^">x^y</button>
+
+        <button class="func" data-insert="sqrt(">√x</button>
+        <button class="func" data-insert="log(">log</button>
+        <button class="func" data-insert="ln(">ln</button>
+        <button class="op" data-insert="/">÷</button>
+
+        <button data-insert="7">7</button>
+        <button data-insert="8">8</button>
+        <button data-insert="9">9</button>
+        <button class="op" data-insert="*">×</button>
+
+        <button data-insert="4">4</button>
+        <button data-insert="5">5</button>
+        <button data-insert="6">6</button>
+        <button class="op" data-insert="-">−</button>
+
+        <button data-insert="1">1</button>
+        <button data-insert="2">2</button>
+        <button data-insert="3">3</button>
+        <button class="op" data-insert="+">+</button>
+
+        <button class="func" data-insert="pi">π</button>
+        <button data-insert="0">0</button>
+        <button data-insert=".">.</button>
+        <button class="accent" data-action="equals">=</button>
+
+        <button class="wide" data-insert="e">e</button>
+        <button class="wide" data-insert="abs(">abs</button>
+      </div>
+
+      <div class="hint">
+        鍵盤也可操作：數字、運算子、Enter 計算、Backspace 刪除、Esc 清除。
+      </div>
+
+      <div class="footer">
+        <span>Ans 會保留上一次結果</span>
+        <a href="../index.html">回首頁</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const expressionEl = document.getElementById("expression");
+    const resultEl = document.getElementById("result");
+    const statusEl = document.getElementById("status");
+    const angleModeEl = document.getElementById("angleMode");
+    const buttons = document.querySelectorAll("button[data-insert], button[data-action]");
+
+    let expression = "";
+    let lastAnswer = 0;
+    let angleMode = "DEG";
+
+    const functionNames = new Set(["sin", "cos", "tan", "asin", "acos", "atan", "sqrt", "log", "ln", "abs", "exp", "floor", "ceil", "round"]);
+
+    function render() {
+      expressionEl.textContent = expression || "";
+      resultEl.textContent = expression ? previewResult() : "0";
+    }
+
+    function previewResult() {
+      try {
+        const value = evaluateExpression(expression);
+        if (!Number.isFinite(value)) {
+          return "錯誤";
+        }
+        return formatNumber(value);
+      } catch {
+        return "...";
+      }
+    }
+
+    function formatNumber(value) {
+      if (Number.isInteger(value)) {
+        return String(value);
+      }
+      const abs = Math.abs(value);
+      if (abs !== 0 && (abs >= 1e10 || abs < 1e-6)) {
+        return value.toExponential(8).replace(/0+e/, "e").replace(/\.e/, "e");
+      }
+      return parseFloat(value.toPrecision(12)).toString();
+    }
+
+    function insertText(text) {
+      expression += text;
+      statusEl.textContent = "可直接輸入算式";
+      render();
+    }
+
+    function clearAll() {
+      expression = "";
+      statusEl.textContent = "已清除";
+      render();
+    }
+
+    function backspace() {
+      expression = expression.slice(0, -1);
+      statusEl.textContent = "已刪除一個字元";
+      render();
+    }
+
+    function toggleAngleMode() {
+      angleMode = angleMode === "DEG" ? "RAD" : "DEG";
+      angleModeEl.textContent = angleMode;
+      statusEl.textContent = `角度模式切換為 ${angleMode}`;
+      render();
+    }
+
+    function equals() {
+      try {
+        if (!expression.trim()) {
+          resultEl.textContent = "0";
+          return;
+        }
+        const value = evaluateExpression(expression);
+        if (!Number.isFinite(value)) {
+          throw new Error("Invalid result");
+        }
+        lastAnswer = value;
+        expression = formatNumber(value);
+        resultEl.textContent = expression;
+        statusEl.textContent = `Ans = ${formatNumber(lastAnswer)}`;
+      } catch (error) {
+        resultEl.textContent = "錯誤";
+        statusEl.textContent = "算式有誤，請檢查括號、函數或除以零";
+      }
+    }
+
+    function evaluateExpression(input) {
+      const normalized = input
+        .replace(/Ans\b/g, String(lastAnswer))
+        .replace(/π/g, String(Math.PI))
+        .replace(/\be\b/g, String(Math.E))
+        .replace(/×/g, "*")
+        .replace(/÷/g, "/")
+        .replace(/−/g, "-")
+        .replace(/\s+/g, "");
+
+      const tokens = tokenize(normalized);
+      const rpn = toRpn(tokens);
+      return computeRpn(rpn);
+    }
+
+    function tokenize(input) {
+      const tokens = [];
+      let i = 0;
+
+      while (i < input.length) {
+        const char = input[i];
+
+        if (/\d|\./.test(char)) {
+          let number = char;
+          i += 1;
+          while (i < input.length && /[\d.]/.test(input[i])) {
+            number += input[i];
+            i += 1;
+          }
+          if ((number.match(/\./g) || []).length > 1) {
+            throw new Error("Invalid number");
+          }
+          tokens.push({ type: "number", value: parseFloat(number) });
+          continue;
+        }
+
+        if (/[a-zA-Z]/.test(char)) {
+          let name = char;
+          i += 1;
+          while (i < input.length && /[a-zA-Z]/.test(input[i])) {
+            name += input[i];
+            i += 1;
+          }
+          tokens.push({ type: "name", value: name });
+          continue;
+        }
+
+        if ("+-*/^()".includes(char)) {
+          tokens.push({ type: "op", value: char });
+          i += 1;
+          continue;
+        }
+
+        if (char === ",") {
+          tokens.push({ type: "comma", value: "," });
+          i += 1;
+          continue;
+        }
+
+        throw new Error(`Unsupported character: ${char}`);
+      }
+
+      return tokens;
+    }
+
+    function toRpn(tokens) {
+      const output = [];
+      const stack = [];
+      let previousType = "start";
+
+      const precedence = {
+        "u-": 5,
+        "^": 4,
+        "*": 3,
+        "/": 3,
+        "+": 2,
+        "-": 2,
+      };
+
+      const rightAssociative = new Set(["^", "u-"]);
+
+      for (const token of tokens) {
+        if (token.type === "number") {
+          output.push(token);
+          previousType = "number";
+          continue;
+        }
+
+        if (token.type === "name") {
+          if (token.value === "pi" || token.value === "e") {
+            output.push({ type: "number", value: token.value === "pi" ? Math.PI : Math.E });
+          } else if (functionNames.has(token.value)) {
+            stack.push({ type: "func", value: token.value });
+          } else {
+            throw new Error(`Unknown identifier: ${token.value}`);
+          }
+          previousType = "name";
+          continue;
+        }
+
+        if (token.type === "comma") {
+          while (stack.length && stack[stack.length - 1].value !== "(") {
+            output.push(stack.pop());
+          }
+          if (!stack.length) {
+            throw new Error("Misplaced comma");
+          }
+          previousType = "comma";
+          continue;
+        }
+
+        if (token.value === "(") {
+          stack.push(token);
+          previousType = "("
+          continue;
+        }
+
+        if (token.value === ")") {
+          while (stack.length && stack[stack.length - 1].value !== "(") {
+            output.push(stack.pop());
+          }
+          if (!stack.length) {
+            throw new Error("Mismatched parentheses");
+          }
+          stack.pop();
+          if (stack.length && stack[stack.length - 1].type === "func") {
+            output.push(stack.pop());
+          }
+          previousType = ")";
+          continue;
+        }
+
+        let operator = token.value;
+        if (operator === "-" && (previousType === "start" || previousType === "op" || previousType === "(" || previousType === "comma")) {
+          operator = "u-";
+        }
+
+        while (stack.length) {
+          const top = stack[stack.length - 1];
+          if (top.type === "func") {
+            output.push(stack.pop());
+            continue;
+          }
+          if (top.type !== "op") {
+            break;
+          }
+
+          const topPrecedence = precedence[top.value];
+          const currentPrecedence = precedence[operator];
+          if (
+            topPrecedence > currentPrecedence ||
+            (topPrecedence === currentPrecedence && !rightAssociative.has(operator))
+          ) {
+            output.push(stack.pop());
+            continue;
+          }
+          break;
+        }
+
+        stack.push({ type: "op", value: operator });
+        previousType = "op";
+      }
+
+      while (stack.length) {
+        const token = stack.pop();
+        if (token.value === "(" || token.value === ")") {
+          throw new Error("Mismatched parentheses");
+        }
+        output.push(token);
+      }
+
+      return output;
+    }
+
+    function computeRpn(tokens) {
+      const stack = [];
+
+      for (const token of tokens) {
+        if (token.type === "number") {
+          stack.push(token.value);
+          continue;
+        }
+
+        if (token.type === "func") {
+          if (stack.length < 1) {
+            throw new Error("Missing function argument");
+          }
+          const value = stack.pop();
+          stack.push(runFunction(token.value, value));
+          continue;
+        }
+
+        if (token.type === "op") {
+          if (token.value === "u-") {
+            if (stack.length < 1) {
+              throw new Error("Missing value for unary minus");
+            }
+            stack.push(-stack.pop());
+            continue;
+          }
+
+          if (stack.length < 2) {
+            throw new Error("Missing operator value");
+          }
+
+          const right = stack.pop();
+          const left = stack.pop();
+
+          switch (token.value) {
+            case "+":
+              stack.push(left + right);
+              break;
+            case "-":
+              stack.push(left - right);
+              break;
+            case "*":
+              stack.push(left * right);
+              break;
+            case "/":
+              stack.push(left / right);
+              break;
+            case "^":
+              stack.push(Math.pow(left, right));
+              break;
+            default:
+              throw new Error(`Unknown operator: ${token.value}`);
+          }
+        }
+      }
+
+      if (stack.length !== 1) {
+        throw new Error("Invalid expression");
+      }
+
+      return stack[0];
+    }
+
+    function runFunction(name, value) {
+      const angle = angleMode === "DEG" ? (value * Math.PI) / 180 : value;
+
+      switch (name) {
+        case "sin":
+          return Math.sin(angle);
+        case "cos":
+          return Math.cos(angle);
+        case "tan":
+          return Math.tan(angle);
+        case "asin":
+          return angleMode === "DEG" ? (Math.asin(value) * 180) / Math.PI : Math.asin(value);
+        case "acos":
+          return angleMode === "DEG" ? (Math.acos(value) * 180) / Math.PI : Math.acos(value);
+        case "atan":
+          return angleMode === "DEG" ? (Math.atan(value) * 180) / Math.PI : Math.atan(value);
+        case "sqrt":
+          return Math.sqrt(value);
+        case "log":
+          return Math.log10(value);
+        case "ln":
+          return Math.log(value);
+        case "abs":
+          return Math.abs(value);
+        case "exp":
+          return Math.exp(value);
+        case "floor":
+          return Math.floor(value);
+        case "ceil":
+          return Math.ceil(value);
+        case "round":
+          return Math.round(value);
+        default:
+          throw new Error(`Unknown function: ${name}`);
+      }
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const insert = button.getAttribute("data-insert");
+        const action = button.getAttribute("data-action");
+
+        if (insert) {
+          if (insert === "pi") {
+            insertText("π");
+          } else if (insert === "e") {
+            insertText("e");
+          } else {
+            insertText(insert);
+          }
+          return;
+        }
+
+        switch (action) {
+          case "clear":
+            clearAll();
+            break;
+          case "back":
+            backspace();
+            break;
+          case "equals":
+            equals();
+            break;
+          case "toggle-angle":
+            toggleAngleMode();
+            break;
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        equals();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        clearAll();
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        backspace();
+        return;
+      }
+
+      const allowed = "0123456789.+-*/^()";
+      if (allowed.includes(event.key)) {
+        insertText(event.key);
+        return;
+      }
+
+      if (event.key === "p") {
+        insertText("π");
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
