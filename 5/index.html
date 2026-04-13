@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>影片展示 | 林宜君</title>
+  <meta name="description" content="林宜君的影片展示頁面。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #f7efe2;
+      --bg-2: #e1efe7;
+      --panel: rgba(255, 255, 255, 0.82);
+      --text: #1f2d27;
+      --muted: #53685d;
+      --line: rgba(31, 45, 39, 0.16);
+      --accent: #c35e34;
+      --accent-2: #2e6a53;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 10%, #fff8ef 0, transparent 32%),
+        radial-gradient(circle at 90% 18%, #d6e9db 0, transparent 34%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .page {
+      width: min(980px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 14px 40px rgba(32, 46, 39, 0.14);
+      padding: clamp(18px, 4vw, 34px);
+      backdrop-filter: blur(2px);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(46, 106, 83, 0.28);
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.04em;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-size: clamp(1.9rem, 4.6vw, 3rem);
+      line-height: 1.15;
+    }
+
+    .lead {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .video-wrap {
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #000;
+      aspect-ratio: 16 / 9;
+      box-shadow: 0 10px 24px rgba(31, 45, 39, 0.16);
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #cf7b38);
+      box-shadow: 0 8px 16px rgba(195, 94, 52, 0.24);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn.alt {
+      background: linear-gradient(135deg, var(--accent-2), #6ea27a);
+      box-shadow: 0 8px 16px rgba(46, 106, 83, 0.24);
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 20px rgba(32, 46, 39, 0.2);
+    }
+
+    @media (max-width: 680px) {
+      body {
+        padding: 14px;
+      }
+
+      .page {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <span class="tag">作品 5</span>
+    <h1>影片展示</h1>
+    <p class="lead">這裡已加入 HTML5 影片播放器。你只要把影片檔放到 assets 資料夾，並命名為 video.mp4，就可以直接播放。</p>
+
+    <section class="video-wrap" aria-label="影片播放器">
+      <video controls autoplay muted loop preload="metadata" playsinline>
+        <source src="../assets/video.mp4" type="video/mp4" />
+        你的瀏覽器不支援影片播放，請改用較新的瀏覽器。
+      </video>
+    </section>
+
+    <p class="note">目前影片來源：../assets/video.mp4</p>
+
+    <div class="actions">
+      <a class="btn" href="../index.html">返回首頁</a>
+      <a class="btn alt" href="../4/index.html">上一個作品</a>
+    </div>
+  </main>
+</body>
+</html>

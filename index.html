@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>宜君 | 遊戲作品集</title>
-  <meta name="description" content="宜君的作品集：打地鼠、貪吃蛇、Python 俄羅斯方塊與工程計算機。" />
+  <meta name="description" content="宜君的作品集：打地鼠、貪吃蛇、Python 俄羅斯方塊、工程計算機與影片展示。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -150,6 +150,10 @@
       animation-delay: 0.5s;
     }
 
+    .card:nth-child(5) {
+      animation-delay: 0.62s;
+    }
+
     .card h3 {
       margin: 0 0 10px;
       font-size: 1.28rem;
@@ -193,6 +197,15 @@
       display: block;
       object-fit: cover;
       background: #fff;
+    }
+
+    .thumb video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #000;
+      pointer-events: none;
     }
 
     .thumb-label {
@@ -279,7 +292,7 @@
       <h1>我是宜君，歡迎來到我的遊戲作品集</h1>
       <p class="lead">
         我喜歡把創意變成可以互動的小遊戲，從玩法設計到畫面呈現，
-        都希望讓玩家感受到「簡單、好玩、有節奏」。這裡收錄了我目前完成的四個作品。
+        都希望讓玩家感受到「簡單、好玩、有節奏」。這裡收錄了我目前完成的五個作品。
       </p>
     </section>
 
@@ -323,6 +336,18 @@
         </a>
         <p>支援三角函數、對數、平方根與角度切換，手機也能直接操作。</p>
         <a class="btn alt" href="4/index.html">前往使用</a>
+      </article>
+
+      <article class="card">
+        <h3>5. 影片展示</h3>
+        <a class="thumb" href="5/index.html" aria-label="影片展示縮圖，點擊前往查看">
+          <span class="thumb-label">影片預覽</span>
+          <video autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+            <source src="assets/video.mp4" type="video/mp4" />
+          </video>
+        </a>
+        <p>作品影片頁面，支援 HTML5 播放器與自動播放，手機與桌面都能流暢觀看。</p>
+        <a class="btn" href="5/index.html">前往查看</a>
       </article>
     </section>
 
