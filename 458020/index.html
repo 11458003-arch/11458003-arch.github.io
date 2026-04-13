@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>陳宥穎 | 遊戲作品集</title>
+  <meta name="description" content="陳宥穎的作品集：打地鼠、貪吃蛇、Python 俄羅斯方塊與工程計算機。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #fff7fb;
+      --bg-2: #ffdce9;
+      --ink: #5b2b45;
+      --muted: #9a6a83;
+      --card: rgba(255, 247, 252, 0.9);
+      --line: rgba(212, 130, 165, 0.26);
+      --accent: #f78fb3;
+      --accent-2: #f4b4cc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--ink);
+        background: radial-gradient(circle at 15% 0%, rgba(248, 169, 200, 0.28) 0, transparent 42%),
+          radial-gradient(circle at 85% 20%, rgba(255, 206, 228, 0.28) 0, transparent 38%),
+                  linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      border-radius: 999px;
+      filter: blur(4px);
+      opacity: 0.55;
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    body::before {
+      width: 280px;
+      height: 280px;
+      right: -80px;
+      top: -70px;
+      background: linear-gradient(135deg, #f7a9c8, #ffd3e5);
+    }
+
+    body::after {
+      width: 220px;
+      height: 220px;
+      left: -70px;
+      bottom: -60px;
+      background: linear-gradient(135deg, #ef9dbd, #f9c4da);
+    }
+
+    .wrap {
+      width: min(980px, 92vw);
+      margin: 0 auto;
+      padding: 48px 0 72px;
+    }
+
+    .hero {
+      padding: 34px clamp(20px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--card);
+      box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35);
+      transform: translateY(18px);
+      opacity: 0;
+      animation: rise 0.9s ease forwards;
+      backdrop-filter: blur(10px);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 156, 199, 0.45);
+      color: var(--accent-2);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      font-size: 0.88rem;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2.1rem, 5.4vw, 3.4rem);
+      line-height: 1.08;
+      font-family: "Cormorant Garamond", serif;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.4vw, 1.08rem);
+      line-height: 1.75;
+      max-width: 62ch;
+    }
+
+    .section-title {
+      margin: 52px 0 16px;
+      font-family: "Cormorant Garamond", serif;
+      font-size: clamp(1.8rem, 4.2vw, 2.4rem);
+      letter-spacing: 0.02em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 22px;
+      background: rgba(255, 245, 251, 0.92);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+      transform: translateY(14px);
+      opacity: 0;
+      animation: rise 0.8s ease forwards;
+    }
+
+    .card:nth-child(1) {
+      animation-delay: 0.14s;
+    }
+
+    .card:nth-child(2) {
+      animation-delay: 0.26s;
+    }
+
+    .card:nth-child(3) {
+      animation-delay: 0.38s;
+    }
+
+    .card:nth-child(4) {
+      animation-delay: 0.5s;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.28rem;
+    }
+
+    .card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .thumb {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 170px;
+      aspect-ratio: 16 / 10;
+      margin-bottom: 16px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+      background: #ffe8f2;
+      text-decoration: none;
+    }
+
+    .thumb iframe {
+      width: 200%;
+      height: 200%;
+      border: 0;
+      transform: scale(0.5);
+      transform-origin: top left;
+      pointer-events: none;
+      display: block;
+      background: #ffe8f2;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #ffe8f2;
+    }
+
+    .thumb-label {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #5b2b45;
+      background: rgba(255, 232, 243, 0.84);
+      backdrop-filter: blur(6px);
+      letter-spacing: 0.02em;
+    }
+
+    .thumb:hover,
+    .thumb:focus-visible {
+      outline: 2px solid rgba(255, 115, 173, 0.55);
+      outline-offset: 2px;
+    }
+
+    .btn {
+      display: inline-block;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--accent), #ec7ca6);
+      box-shadow: 0 8px 16px rgba(190, 103, 139, 0.28);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn.alt {
+      background: linear-gradient(135deg, var(--accent-2), #ef9fbe);
+      box-shadow: 0 8px 16px rgba(182, 112, 144, 0.24);
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 18px rgba(30, 42, 35, 0.2);
+    }
+
+    .footer {
+      margin-top: 42px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        padding-top: 28px;
+      }
+
+      .hero,
+      .card {
+        border-radius: 18px;
+      }
+
+      .thumb {
+        height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="tag">PORTFOLIO</span>
+      <h1>我是陳宥穎，歡迎來到我的遊戲作品集</h1>
+      <p class="lead">
+        我喜歡把創意變成可以互動的小遊戲，從玩法設計到畫面呈現，
+        都希望讓玩家感受到「簡單、好玩、有節奏」。這裡收錄了我目前完成的四個作品。
+      </p>
+    </section>
+
+    <h2 class="section-title">遊戲作品</h2>
+    <section class="grid" aria-label="遊戲作品列表">
+      <article class="card">
+        <h3>1. 打地鼠</h3>
+        <a class="thumb" href="1/index.html" aria-label="打地鼠縮圖，點擊前往遊玩">
+          <span class="thumb-label">縮圖預覽</span>
+          <img src="assets/whac-a-mole-thumb.svg" alt="打地鼠遊戲縮圖" loading="lazy" />
+        </a>
+        <p>快速反應挑戰！在地鼠冒出來的瞬間擊中牠，看看你能拿下多少分。</p>
+        <a class="btn" href="1/index.html">前往遊玩</a>
+      </article>
+
+      <article class="card">
+        <h3>2. 貪吃蛇</h3>
+        <a class="thumb" href="2/index.html" aria-label="貪吃蛇縮圖，點擊前往遊玩">
+          <span class="thumb-label">縮圖預覽</span>
+          <img src="assets/snake-thumb.svg" alt="貪吃蛇遊戲縮圖" loading="lazy" />
+        </a>
+        <p>經典耐玩玩法，控制蛇不斷成長並閃避碰撞，挑戰你的最高紀錄。</p>
+        <a class="btn alt" href="2/index.html">前往遊玩</a>
+      </article>
+
+      <article class="card">
+        <h3>3. 工程計算機</h3>
+        <a class="thumb" href="3/index.html" aria-label="工程計算機縮圖，點擊前往使用">
+          <span class="thumb-label">現場預覽</span>
+          <iframe src="3/index.html" title="工程計算機預覽" loading="lazy"></iframe>
+        </a>
+        <p>支援三角函數、對數、平方根與角度切換，手機也能直接操作。</p>
+        <a class="btn alt" href="3/index.html">前往使用</a>
+      </article>
+    </section>
+
+    <p class="footer">© 2026 陳宥穎｜Game Portfolio</p>
+    <p class="footer">設計者：陳宥穎</p>
+  </main>
+</body>
+</html>
