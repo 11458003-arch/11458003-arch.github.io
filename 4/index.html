@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>工程計算機</title>
+  <title>工程計算機 | 林宜君</title>
+  <meta name="description" content="林宜君設計的手機可操作工程計算機，支援三角函數、對數、平方根與角度切換。" />
   <style>
     :root {
       --bg-1: #0f172a;
@@ -77,6 +78,21 @@
       font-size: 0.9rem;
     }
 
+    .designer-top {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 1.16rem;
+      font-weight: 900;
+      letter-spacing: 0.05em;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(125, 211, 252, 0.18), rgba(251, 191, 36, 0.14));
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+
     h1 {
       margin: 16px 0 10px;
       font-size: clamp(2.1rem, 4.4vw, 3.4rem);
@@ -89,6 +105,17 @@
       font-size: 1rem;
       line-height: 1.8;
       max-width: 62ch;
+    }
+
+    .note {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #dbeafe;
+      line-height: 1.6;
+      font-size: 0.96rem;
     }
 
     .features {
@@ -251,6 +278,13 @@
       font-size: 0.92rem;
     }
 
+    .designer {
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+
     a {
       color: var(--accent);
       text-decoration: none;
@@ -369,12 +403,14 @@
 <body>
   <main class="wrap">
     <section class="hero">
+      <div class="designer-top">設計者：林宜君</div>
       <div class="badge">工程用計算機</div>
       <h1>有函數的工程計算機</h1>
       <p class="lead">
         支援基本四則運算、括號、冪次、三角函數、反三角函數、對數、自然對數、平方根、絕對值與常數 π、e。
         可切換角度模式，適合課堂示範與日常計算。
       </p>
+      <div class="note">手機也能直接操作，按鈕已放大並調整為更適合觸控的版面。</div>
 
       <div class="features">
         <div class="feature">
@@ -458,7 +494,6 @@
       </div>
 
       <div class="footer">
-        <span>設計者：林宜君</span>
         <span>Ans 會保留上一次結果</span>
         <a href="../index.html">回首頁</a>
       </div>
