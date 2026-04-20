@@ -307,6 +307,12 @@
     const statusEl = document.getElementById("status");
     const responseEl = document.getElementById("response");
 
+    function isLikelyGeminiKey(key) {
+      return /^AIza[0-9A-Za-z_-]{35}$/.test(String(key || "").trim());
+    }
+
+    const ACTIVE_API_KEYS = LOCKED_API_KEYS.filter(isLikelyGeminiKey);
+
     function setStatus(message, isError) {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", Boolean(isError));
@@ -399,11 +405,15 @@
     async function askGemini(question) {
       let lastError = null;
 
+      if (ACTIVE_API_KEYS.length === 0) {
+        throw new Error("沒有可用的 API key，請更新金鑰。");
+      }
+
       for (let modelIndex = 0; modelIndex < MODELS.length; modelIndex += 1) {
         const model = MODELS[modelIndex];
 
-        for (let keyIndex = 0; keyIndex < LOCKED_API_KEYS.length; keyIndex += 1) {
-          const apiKey = LOCKED_API_KEYS[keyIndex];
+        for (let keyIndex = 0; keyIndex < ACTIVE_API_KEYS.length; keyIndex += 1) {
+          const apiKey = ACTIVE_API_KEYS[keyIndex];
           try {
             const data = await requestOnce(apiKey, model, question);
             apiKeyInput.value = apiKey;
@@ -421,7 +431,7 @@
     }
 
     function initializeApiKey() {
-      apiKeyInput.value = LOCKED_API_KEYS[0];
+      apiKeyInput.value = ACTIVE_API_KEYS[0] || "";
       renderQA("", "");
     }
 
@@ -452,7 +462,11 @@
         setStatus("完成（" + result.model + "）。", false);
       } catch (error) {
         renderQA(question, "目前無法取得回覆，請稍後再試。");
-        setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
+        if (String((error && error.message) || "").toLowerCase().includes("api key not valid")) {
+          setStatus("全部金鑰都無效，請更換新 API key。", true);
+        } else {
+          setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
+        }
       } finally {
         sendBtn.disabled = false;
       }
