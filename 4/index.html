@@ -258,7 +258,7 @@
       <p class="designer">設計者：林宜君</p>
       <p class="lead">建議模型：Gemini 2.5 Flash。可輸入 API Key、輸入問題並顯示回覆。</p>
       <p class="hint">
-        此頁面已固定套用 API 金鑰，載入後會自動帶入並使用。<br />
+        此頁面已固定並鎖定 API 金鑰，載入後會自動帶入並使用。<br />
         送出問題後，下方對話框會以「一問一答」模式顯示。
       </p>
       <p class="key-note">金鑰欄位已隱藏，不會顯示在頁面上。</p>
@@ -285,17 +285,21 @@
   </main>
 
   <script>
-    const PRIMARY_MODEL = "gemini-2.5-flash";
-    const PREFERRED_MODELS = [
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite",
-      "gemini-1.5-flash-latest"
+    const MODELS = ["gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-2.5-flash"];
+    const LOCKED_API_KEYS = [
+      "AIzaSyDRzF7iTgdiEaB9XXNoYBHqNTPNhJ_dgXU",
+      "AIzaSyBsMFuzxLF5LRtnQ0CLTDUkrnQJWVm3jFg",
+      "AIzaSyDwVmXSvu12E3ZbKNR5-Wh9eezYGDou4uA",
+      "C6hndPUshK8nfCq6yKIo43g0lsZQPRNWE",
+      "AIzaSyAKbfdM6GU2u0kmWXh32gO76Ifu0_93_4k"
     ];
-    const MAX_RETRIES = 2;
-    const API_KEY_STORAGE = "gemini_api_key_folder4";
-    const DEFAULT_API_KEY = "AIzaSyDRzF7iTgdiEaB9XXNoYBHqNTPNhJ_dgXU";
-    let cachedGenerateModels = null;
+    const MAX_QUESTION_LENGTH = 500;
+    const GENERATION_CONFIG = {
+      maxOutputTokens: 256,
+      temperature: 0.5,
+      topP: 0.9
+    };
+
     const form = document.getElementById("chat-form");
     const apiKeyInput = document.getElementById("api-key");
     const questionInput = document.getElementById("question");
@@ -303,9 +307,9 @@
     const statusEl = document.getElementById("status");
     const responseEl = document.getElementById("response");
 
-    function setStatus(message, isError = false) {
+    function setStatus(message, isError) {
       statusEl.textContent = message;
-      statusEl.classList.toggle("error", isError);
+      statusEl.classList.toggle("error", Boolean(isError));
     }
 
     function createChatRow(type, label, text) {
@@ -346,9 +350,8 @@
 
     function pickResponseText(data) {
       const candidates = data && data.candidates;
-
       if (!Array.isArray(candidates) || candidates.length === 0) {
-        return "模型沒有回傳內容，請稍後再試。";
+        return "模型沒有回覆內容。";
       }
 
       const parts = candidates[0] && candidates[0].content && candidates[0].content.parts;
@@ -357,126 +360,32 @@
       }
 
       const texts = parts
-        .map(function (part) {
-          return part && part.text;
-        })
-        .filter(function (text) {
-          return typeof text === "string" && text.trim().length > 0;
-        });
+        .map(function (part) { return part && part.text; })
+        .filter(function (text) { return typeof text === "string" && text.trim(); });
 
-      return texts.length > 0 ? texts.join("\n\n") : "模型沒有產生可顯示的文字。";
+      return texts.length ? texts.join("\n\n") : "模型沒有產生可顯示文字。";
     }
 
-    function wait(ms) {
-      return new Promise(function (resolve) {
-        setTimeout(resolve, ms);
-      });
+    function isRetryable(statusCode, message) {
+      const text = String(message || "").toLowerCase();
+      return statusCode === 401 || statusCode === 403 || statusCode === 404 || statusCode === 429 || statusCode === 503 ||
+        text.includes("leaked") || text.includes("invalid api key") || text.includes("high demand") || text.includes("resource exhausted");
     }
 
-    function isHighDemandError(statusCode, message) {
-      const text = (message || "").toLowerCase();
-      return statusCode === 429 || statusCode === 503 || text.includes("high demand") || text.includes("resource exhausted");
-    }
-
-    function isModelNotFoundError(statusCode, message) {
-      const text = (message || "").toLowerCase();
-      return statusCode === 404 || text.includes("is not found") || text.includes("not supported for generatecontent");
-    }
-
-    function normalizeModelName(name) {
-      return String(name || "").replace(/^models\//, "").trim();
-    }
-
-    function uniqueModels(models) {
-      const seen = new Set();
-      return models.filter(function (name) {
-        if (!name || seen.has(name)) {
-          return false;
-        }
-        seen.add(name);
-        return true;
-      });
-    }
-
-    async function fetchAvailableGenerateModels(apiKey, forceRefresh) {
-      if (cachedGenerateModels && !forceRefresh) {
-        return cachedGenerateModels;
-      }
-
-      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(apiKey);
-      const response = await fetch(endpoint);
-      const data = await response.json().catch(function () {
-        return {};
-      });
-
-      if (!response.ok) {
-        const message = (data && data.error && data.error.message) || ("HTTP " + response.status);
-        const error = new Error(message);
-        error.statusCode = response.status;
-        throw error;
-      }
-
-      const models = Array.isArray(data && data.models) ? data.models : [];
-      cachedGenerateModels = uniqueModels(
-        models
-          .filter(function (item) {
-            const methods = item && item.supportedGenerationMethods;
-            return Array.isArray(methods) && methods.includes("generateContent");
-          })
-          .map(function (item) {
-            return normalizeModelName(item && item.name);
-          })
-      );
-
-      return cachedGenerateModels;
-    }
-
-    async function resolveModelPlan(apiKey) {
-      try {
-        const available = await fetchAvailableGenerateModels(apiKey, false);
-        if (!Array.isArray(available) || available.length === 0) {
-          return [PRIMARY_MODEL];
-        }
-
-        const preferred = PREFERRED_MODELS.filter(function (name) {
-          return available.includes(name);
-        });
-        const flashOthers = available.filter(function (name) {
-          return name.includes("flash") && !preferred.includes(name);
-        });
-        const remaining = available.filter(function (name) {
-          return !preferred.includes(name) && !flashOthers.includes(name);
-        });
-
-        const plan = uniqueModels(preferred.concat(flashOthers).concat(remaining));
-        return plan.length > 0 ? plan : [PRIMARY_MODEL];
-      } catch (error) {
-        return [PRIMARY_MODEL];
-      }
-    }
-
-    async function requestWithModel(apiKey, question, modelName) {
+    async function requestOnce(apiKey, modelName, question) {
       const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + encodeURIComponent(apiKey);
       const payload = {
-        contents: [
-          {
-            parts: [{ text: question }]
-          }
-        ]
+        contents: [{ parts: [{ text: question }] }],
+        generationConfig: GENERATION_CONFIG
       };
 
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
-      const data = await response.json().catch(function () {
-        return {};
-      });
-
+      const data = await response.json().catch(function () { return {}; });
       if (!response.ok) {
         const message = (data && data.error && data.error.message) || ("HTTP " + response.status);
         const error = new Error(message);
@@ -487,115 +396,63 @@
       return data;
     }
 
-    async function getAnswerWithRetryAndFallback(apiKey, question) {
-      const modelPlan = await resolveModelPlan(apiKey);
+    async function askGemini(question) {
       let lastError = null;
 
-      for (let modelIndex = 0; modelIndex < modelPlan.length; modelIndex += 1) {
-        const modelName = modelPlan[modelIndex];
+      for (let modelIndex = 0; modelIndex < MODELS.length; modelIndex += 1) {
+        const model = MODELS[modelIndex];
 
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+        for (let keyIndex = 0; keyIndex < LOCKED_API_KEYS.length; keyIndex += 1) {
+          const apiKey = LOCKED_API_KEYS[keyIndex];
           try {
-            const data = await requestWithModel(apiKey, question, modelName);
-            return {
-              data: data,
-              usedModel: modelName,
-              usedFallback: modelIndex > 0
-            };
+            const data = await requestOnce(apiKey, model, question);
+            apiKeyInput.value = apiKey;
+            return { data: data, model: model, keyIndex: keyIndex };
           } catch (error) {
             lastError = error;
-
-            if (isModelNotFoundError(error.statusCode, error.message)) {
-              if (modelIndex < modelPlan.length - 1) {
-                setStatus("模型「" + modelName + "」不可用，切換下一個模型...");
-              }
-              break;
+            if (!isRetryable(error.statusCode, error.message)) {
+              throw error;
             }
-
-            if (isHighDemandError(error.statusCode, error.message) && attempt < MAX_RETRIES) {
-              setStatus("模型流量高，正在重試...（" + (attempt + 1) + "/" + MAX_RETRIES + "）");
-              await wait(800 * (attempt + 1));
-              continue;
-            }
-
-            break;
           }
-        }
-
-        if (lastError && isModelNotFoundError(lastError.statusCode, lastError.message) && modelIndex === 0) {
-          try {
-            await fetchAvailableGenerateModels(apiKey, true);
-          } catch (error) {
-            // Ignore refresh failures and continue fallback sequence.
-          }
-        }
-
-        if (lastError && isHighDemandError(lastError.statusCode, lastError.message) && modelIndex < modelPlan.length - 1) {
-          setStatus("目前模型忙碌，切換其他可用模型中...");
-          continue;
-        }
-
-        if (lastError && !isModelNotFoundError(lastError.statusCode, lastError.message) && !isHighDemandError(lastError.statusCode, lastError.message)) {
-          break;
         }
       }
 
-      throw lastError || new Error("無可用模型可回覆。");
+      throw lastError || new Error("目前無法回覆，請稍後再試。");
     }
 
     function initializeApiKey() {
-      try {
-        apiKeyInput.value = DEFAULT_API_KEY;
-        localStorage.setItem(API_KEY_STORAGE, DEFAULT_API_KEY);
-      } catch (error) {
-        setStatus("無法讀取本機設定，仍可手動輸入金鑰。", true);
-      }
+      apiKeyInput.value = LOCKED_API_KEYS[0];
+      renderQA("", "");
     }
 
     initializeApiKey();
-    renderQA("", "");
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
-      const apiKey = apiKeyInput.value.trim();
-      const question = questionInput.value.trim();
-
-      if (!apiKey) {
-        setStatus("請先輸入 Gemini API Key。", true);
-        apiKeyInput.focus();
-        return;
-      }
-
+      let question = questionInput.value.trim();
       if (!question) {
-        setStatus("請先輸入問題內容。", true);
+        setStatus("請輸入問題。", true);
         questionInput.focus();
         return;
       }
 
+      if (question.length > MAX_QUESTION_LENGTH) {
+        question = question.slice(0, MAX_QUESTION_LENGTH);
+      }
+
       sendBtn.disabled = true;
-      setStatus("送出中，請稍候...");
-      renderQA(question, "正在等待 Gemini 回覆...");
+      setStatus("送出中...");
+      renderQA(question, "等待回覆中...");
 
       try {
-        const result = await getAnswerWithRetryAndFallback(apiKey, question);
+        const result = await askGemini(question);
         const answer = pickResponseText(result.data);
         renderQA(question, answer);
-        if (result.usedFallback) {
-          setStatus("已收到回覆（已自動切換備援模型：" + result.usedModel + "）。", false);
-        } else {
-          setStatus("已收到回覆（模型：" + result.usedModel + "）。", false);
-        }
+        setStatus("完成（" + result.model + "）。", false);
       } catch (error) {
-        renderQA(question, "無法取得回覆。若是高流量，可稍後重試或改用較短問題。");
-
-        if (isHighDemandError(error && error.statusCode, error && error.message)) {
-          setStatus("目前模型流量過高，已嘗試重試與備援，請稍後再試。", true);
-        } else if (isModelNotFoundError(error && error.statusCode, error && error.message)) {
-          setStatus("模型名稱不可用，已嘗試自動切換；請再送出一次或更換 API Key。", true);
-        } else {
-          setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
-        }
+        renderQA(question, "目前無法取得回覆，請稍後再試。");
+        setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
       } finally {
         sendBtn.disabled = false;
       }
