@@ -110,6 +110,106 @@
       max-width: 62ch;
     }
 
+    .daruma-wrap {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .daruma {
+      position: relative;
+      width: 146px;
+      height: 166px;
+      border-radius: 999px 999px 38px 38px;
+      background: radial-gradient(circle at 30% 24%, #f18655 0, #c9552d 50%, #aa421f 100%);
+      border: 2px solid rgba(89, 30, 12, 0.36);
+      box-shadow: 0 10px 24px rgba(43, 22, 13, 0.22);
+      transform-origin: center bottom;
+      animation: wobble 2.8s ease-in-out infinite;
+    }
+
+    .daruma::before,
+    .daruma::after {
+      content: "";
+      position: absolute;
+      top: 54px;
+      width: 42px;
+      height: 26px;
+      border-radius: 50%;
+      background: #fff7ec;
+      border: 1px solid rgba(83, 50, 31, 0.25);
+      box-shadow: inset 0 -2px 0 rgba(95, 57, 38, 0.14);
+    }
+
+    .daruma::before {
+      left: 24px;
+    }
+
+    .daruma::after {
+      right: 24px;
+    }
+
+    .daruma-eye {
+      position: absolute;
+      top: 62px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #30231d;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .daruma-eye.left {
+      left: 41px;
+    }
+
+    .daruma-eye.right {
+      right: 41px;
+    }
+
+    .daruma-brow {
+      position: absolute;
+      top: 49px;
+      width: 26px;
+      height: 12px;
+      border-top: 3px solid #5f2d1f;
+      border-radius: 999px;
+    }
+
+    .daruma-brow.left {
+      left: 33px;
+      transform: rotate(-8deg);
+    }
+
+    .daruma-brow.right {
+      right: 33px;
+      transform: rotate(8deg);
+    }
+
+    .daruma-mouth {
+      position: absolute;
+      left: 50%;
+      top: 93px;
+      transform: translateX(-50%);
+      width: 34px;
+      height: 16px;
+      border-bottom: 3px solid #f9ead6;
+      border-radius: 0 0 999px 999px;
+    }
+
+    .daruma-base {
+      position: absolute;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      width: 98px;
+      height: 34px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f8f0e2, #e5cfad);
+      border: 1px solid rgba(96, 70, 40, 0.22);
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+    }
+
     .section-title {
       margin: 52px 0 16px;
       font-family: "Cormorant Garamond", serif;
@@ -269,6 +369,19 @@
       }
     }
 
+    @keyframes wobble {
+      0%,
+      100% {
+        transform: rotate(0deg);
+      }
+      25% {
+        transform: rotate(6deg);
+      }
+      75% {
+        transform: rotate(-6deg);
+      }
+    }
+
     @media (max-width: 640px) {
       .wrap {
         padding-top: 28px;
@@ -294,6 +407,16 @@
         我喜歡把創意變成可以互動的小遊戲，從玩法設計到畫面呈現，
         都希望讓玩家感受到「簡單、好玩、有節奏」。這裡收錄了我目前完成的五個作品。
       </p>
+      <div class="daruma-wrap" aria-label="不倒翁圖案">
+        <div class="daruma" role="img" aria-label="不倒翁插畫">
+          <span class="daruma-brow left" aria-hidden="true"></span>
+          <span class="daruma-brow right" aria-hidden="true"></span>
+          <span class="daruma-eye left" aria-hidden="true"></span>
+          <span class="daruma-eye right" aria-hidden="true"></span>
+          <span class="daruma-mouth" aria-hidden="true"></span>
+          <span class="daruma-base" aria-hidden="true"></span>
+        </div>
+      </div>
     </section>
 
     <h2 class="section-title">遊戲作品</h2>
