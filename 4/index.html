@@ -179,27 +179,53 @@
       background: rgba(255, 255, 255, 0.86);
       display: grid;
       gap: 12px;
+      align-content: start;
+      overflow-y: auto;
     }
 
-    .qa-block {
-      border: 1px solid rgba(29, 42, 38, 0.12);
-      border-radius: 12px;
-      padding: 10px 12px;
+    .chat-row {
+      display: flex;
+    }
+
+    .chat-row.question {
+      justify-content: flex-end;
+    }
+
+    .chat-row.answer {
+      justify-content: flex-start;
+    }
+
+    .chat-bubble {
+      max-width: min(78%, 560px);
+      border-radius: 14px;
+      border: 1px solid rgba(29, 42, 38, 0.14);
       background: #ffffff;
+      padding: 10px 12px;
+      box-shadow: 0 5px 12px rgba(29, 42, 38, 0.08);
     }
 
-    .qa-title {
+    .chat-bubble.question {
+      background: rgba(208, 99, 47, 0.12);
+      border-color: rgba(208, 99, 47, 0.26);
+    }
+
+    .chat-label {
       margin: 0 0 4px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--accent-2);
       font-weight: 700;
       letter-spacing: 0.03em;
     }
 
-    .qa-content {
+    .chat-content {
       margin: 0;
       white-space: pre-wrap;
       word-break: break-word;
+    }
+
+    .chat-placeholder {
+      margin: 0;
+      color: var(--muted);
     }
 
     @keyframes rise {
@@ -252,14 +278,7 @@
 
         <label for="response">顯示回覆視窗</label>
         <div id="response" class="response-box" aria-live="polite">
-          <div class="qa-block">
-            <p class="qa-title">問題</p>
-            <p class="qa-content" id="qa-question">尚未送出問題。</p>
-          </div>
-          <div class="qa-block">
-            <p class="qa-title">回答</p>
-            <p class="qa-content" id="qa-answer">尚未收到回覆。</p>
-          </div>
+          <p class="chat-placeholder">尚未送出問題。</p>
         </div>
       </form>
     </section>
@@ -282,17 +301,47 @@
     const questionInput = document.getElementById("question");
     const sendBtn = document.getElementById("send-btn");
     const statusEl = document.getElementById("status");
-    const qaQuestionEl = document.getElementById("qa-question");
-    const qaAnswerEl = document.getElementById("qa-answer");
+    const responseEl = document.getElementById("response");
 
     function setStatus(message, isError = false) {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", isError);
     }
 
+    function createChatRow(type, label, text) {
+      const row = document.createElement("div");
+      row.className = "chat-row " + type;
+
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble " + type;
+
+      const title = document.createElement("p");
+      title.className = "chat-label";
+      title.textContent = label;
+
+      const content = document.createElement("p");
+      content.className = "chat-content";
+      content.textContent = text;
+
+      bubble.appendChild(title);
+      bubble.appendChild(content);
+      row.appendChild(bubble);
+      return row;
+    }
+
     function renderQA(question, answer) {
-      qaQuestionEl.textContent = question || "尚未送出問題。";
-      qaAnswerEl.textContent = answer || "尚未收到回覆。";
+      responseEl.innerHTML = "";
+
+      if (!question && !answer) {
+        const placeholder = document.createElement("p");
+        placeholder.className = "chat-placeholder";
+        placeholder.textContent = "尚未送出問題。";
+        responseEl.appendChild(placeholder);
+        return;
+      }
+
+      responseEl.appendChild(createChatRow("question", "問題", question || "-"));
+      responseEl.appendChild(createChatRow("answer", "回答", answer || "尚未收到回覆。"));
     }
 
     function pickResponseText(data) {
@@ -496,20 +545,15 @@
 
     function initializeApiKey() {
       try {
-        const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
-        const currentInput = apiKeyInput.value.trim();
-        const finalApiKey = currentInput || savedApiKey || DEFAULT_API_KEY;
-
-        if (finalApiKey) {
-          apiKeyInput.value = finalApiKey;
-          localStorage.setItem(API_KEY_STORAGE, finalApiKey);
-        }
+        apiKeyInput.value = DEFAULT_API_KEY;
+        localStorage.setItem(API_KEY_STORAGE, DEFAULT_API_KEY);
       } catch (error) {
         setStatus("無法讀取本機設定，仍可手動輸入金鑰。", true);
       }
     }
 
     initializeApiKey();
+    renderQA("", "");
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
