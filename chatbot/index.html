@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini 聊天機器人</title>
+  <meta name="description" content="使用 Gemini 2.5 Flash 的簡易聊天機器人，可輸入 API Key 與問題並顯示回覆。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #f5ead9;
+      --bg-2: #cde5d7;
+      --ink: #1d2a26;
+      --muted: #4c6157;
+      --panel: rgba(255, 255, 255, 0.8);
+      --line: rgba(29, 42, 38, 0.16);
+      --accent: #d0632f;
+      --accent-2: #2f6b54;
+      --danger: #a72727;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 10% 10%, #fff8ef 0, transparent 35%),
+                  radial-gradient(circle at 85% 20%, #d8efe2 0, transparent 32%),
+                  linear-gradient(150deg, var(--bg-1), var(--bg-2));
+      padding: 24px;
+    }
+
+    .wrap {
+      width: min(860px, 100%);
+      margin: 0 auto;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: clamp(20px, 4vw, 34px);
+      background: var(--panel);
+      box-shadow: 0 12px 36px rgba(29, 42, 38, 0.14);
+      backdrop-filter: blur(2px);
+      animation: rise 0.8s ease;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(47, 107, 84, 0.34);
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 0.86rem;
+      background: rgba(255, 255, 255, 0.74);
+      letter-spacing: 0.03em;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(1.9rem, 5vw, 2.8rem);
+      line-height: 1.1;
+    }
+
+    .lead {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .hint {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(47, 107, 84, 0.25);
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.96rem;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      margin-top: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #d48742);
+      box-shadow: 0 8px 16px rgba(208, 99, 47, 0.26);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 18px rgba(29, 42, 38, 0.22);
+    }
+
+    .status {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .response-box {
+      margin-top: 4px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 180px;
+      padding: 14px;
+      line-height: 1.7;
+      background: rgba(255, 255, 255, 0.86);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 18px;
+      color: var(--accent-2);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      .panel {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <span class="tag">CHATBOT</span>
+      <h1>Gemini 聊天機器人</h1>
+      <p class="lead">可直接輸入 API Key 與問題，按下「送出訊息」後在下方查看回覆。</p>
+      <p class="hint">
+        建議模型：<strong>Gemini 2.5 Flash</strong><br />
+        本頁面會直接從瀏覽器呼叫 Gemini API。請妥善保管你的 API Key，避免公開分享。
+      </p>
+
+      <form class="form" id="chat-form">
+        <label for="api-key">
+          Gemini API Key
+          <input id="api-key" name="apiKey" type="password" placeholder="請輸入你的 API Key" autocomplete="off" required />
+        </label>
+
+        <label for="question">
+          輸入問題
+          <textarea id="question" name="question" placeholder="例如：幫我整理一份三天台南旅行計畫" required></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="submit" class="btn" id="send-btn">送出訊息</button>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+
+        <label for="response">顯示回覆</label>
+        <div id="response" class="response-box" aria-live="polite">尚未收到回覆。</div>
+      </form>
+
+      <a class="back" href="../index.html">返回作品集首頁</a>
+    </section>
+  </main>
+
+  <script>
+    const MODEL_NAME = "gemini-2.5-flash";
+    const form = document.getElementById("chat-form");
+    const apiKeyInput = document.getElementById("api-key");
+    const questionInput = document.getElementById("question");
+    const sendBtn = document.getElementById("send-btn");
+    const statusEl = document.getElementById("status");
+    const responseEl = document.getElementById("response");
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    function pickResponseText(data) {
+      const candidates = data?.candidates;
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return "模型沒有回傳內容，請稍後再試。";
+      }
+
+      const parts = candidates[0]?.content?.parts;
+      if (!Array.isArray(parts)) {
+        return "模型回覆格式無法解析。";
+      }
+
+      const texts = parts
+        .map((part) => part?.text)
+        .filter((text) => typeof text === "string" && text.trim().length > 0);
+
+      return texts.length > 0 ? texts.join("\n\n") : "模型沒有產生可顯示的文字。";
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const apiKey = apiKeyInput.value.trim();
+      const question = questionInput.value.trim();
+
+      if (!apiKey) {
+        setStatus("請先輸入 Gemini API Key。", true);
+        apiKeyInput.focus();
+        return;
+      }
+
+      if (!question) {
+        setStatus("請先輸入問題內容。", true);
+        questionInput.focus();
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setStatus("送出中，請稍候...");
+      responseEl.textContent = "正在等待 Gemini 回覆...";
+
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const payload = {
+          contents: [
+            {
+              parts: [{ text: question }]
+            }
+          ]
+        };
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const message = errorData?.error?.message || `HTTP ${response.status}`;
+          throw new Error(message);
+        }
+
+        const data = await response.json();
+        const answer = pickResponseText(data);
+        responseEl.textContent = answer;
+        setStatus("已收到回覆。", false);
+      } catch (error) {
+        responseEl.textContent = "無法取得回覆，請檢查 API Key、網路連線或稍後再試。";
+        setStatus(`發生錯誤：${error.message}`, true);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
