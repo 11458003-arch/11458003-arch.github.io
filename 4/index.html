@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>資料夾 4 | Gemini 聊天機器人</title>
+  <meta name="description" content="建立在資料夾 4 的 Gemini 2.5 Flash 聊天機器人。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #f5ead9;
+      --bg-2: #cde5d7;
+      --ink: #1d2a26;
+      --muted: #4c6157;
+      --panel: rgba(255, 255, 255, 0.82);
+      --line: rgba(29, 42, 38, 0.16);
+      --accent: #d0632f;
+      --accent-2: #2f6b54;
+      --danger: #a72727;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 10% 10%, #fff8ef 0, transparent 35%),
+                  radial-gradient(circle at 85% 20%, #d8efe2 0, transparent 32%),
+                  linear-gradient(150deg, var(--bg-1), var(--bg-2));
+      padding: 24px;
+    }
+
+    .wrap {
+      width: min(860px, 100%);
+      margin: 0 auto;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: clamp(20px, 4vw, 34px);
+      background: var(--panel);
+      box-shadow: 0 12px 36px rgba(29, 42, 38, 0.14);
+      backdrop-filter: blur(2px);
+      animation: rise 0.8s ease;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(47, 107, 84, 0.34);
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 0.86rem;
+      background: rgba(255, 255, 255, 0.74);
+      letter-spacing: 0.03em;
+    }
+
+    h1 {
+      margin: 14px 0 8px;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(1.9rem, 5vw, 2.8rem);
+      line-height: 1.1;
+    }
+
+    .lead {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .designer {
+      margin: 0 0 10px;
+      font-weight: 700;
+      color: var(--accent-2);
+      letter-spacing: 0.02em;
+    }
+
+    .hint {
+      margin: 0 0 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(47, 107, 84, 0.25);
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.96rem;
+    }
+
+    .form {
+      display: grid;
+      gap: 14px;
+    }
+
+    label {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      margin-top: 6px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font: inherit;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #d48742);
+      box-shadow: 0 8px 16px rgba(208, 99, 47, 0.26);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 18px rgba(29, 42, 38, 0.22);
+    }
+
+    .btn.secondary {
+      color: var(--ink);
+      background: linear-gradient(135deg, #f3f0e8, #d8e7dc);
+      box-shadow: 0 8px 16px rgba(47, 107, 84, 0.18);
+    }
+
+    .status {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .response-box {
+      margin-top: 4px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      min-height: 180px;
+      padding: 14px;
+      line-height: 1.7;
+      background: rgba(255, 255, 255, 0.86);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 16px;
+      }
+
+      .panel {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel">
+      <span class="tag">FOLDER 4</span>
+      <h1>Gemini 聊天機器人</h1>
+      <p class="designer">設計者：林宜君</p>
+      <p class="lead">建議模型：Gemini 2.5 Flash。可輸入 API Key、輸入問題並顯示回覆。</p>
+      <p class="hint">
+        請輸入你自己的 Gemini API Key。<br />
+        此頁面會直接從瀏覽器向 Gemini API 發送請求，請勿公開你的金鑰。
+      </p>
+
+      <form class="form" id="chat-form">
+        <label for="api-key">
+          Gemini API Key
+          <input id="api-key" name="apiKey" type="password" placeholder="請輸入你的 API Key" autocomplete="off" value="AIzaSyDRzF7iTgdiEaB9XXNoYBHqNTPNhJ_dgXU" required />
+        </label>
+
+        <label for="question">
+          輸入問題的欄位
+          <textarea id="question" name="question" placeholder="請輸入你的問題" required></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" class="btn secondary" id="apply-key-btn">套用設定</button>
+          <button type="submit" class="btn" id="send-btn">送出訊息</button>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+
+        <label for="response">顯示回覆視窗</label>
+        <div id="response" class="response-box" aria-live="polite">尚未收到回覆。</div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const PRIMARY_MODEL = "gemini-2.5-flash";
+    const PREFERRED_MODELS = [
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash-latest"
+    ];
+    const MAX_RETRIES = 2;
+    const API_KEY_STORAGE = "gemini_api_key_folder4";
+    const DEFAULT_API_KEY = "AIzaSyDRzF7iTgdiEaB9XXNoYBHqNTPNhJ_dgXU";
+    let cachedGenerateModels = null;
+    const form = document.getElementById("chat-form");
+    const apiKeyInput = document.getElementById("api-key");
+    const questionInput = document.getElementById("question");
+    const applyKeyBtn = document.getElementById("apply-key-btn");
+    const sendBtn = document.getElementById("send-btn");
+    const statusEl = document.getElementById("status");
+    const responseEl = document.getElementById("response");
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    function pickResponseText(data) {
+      const candidates = data && data.candidates;
+
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return "模型沒有回傳內容，請稍後再試。";
+      }
+
+      const parts = candidates[0] && candidates[0].content && candidates[0].content.parts;
+      if (!Array.isArray(parts)) {
+        return "模型回覆格式無法解析。";
+      }
+
+      const texts = parts
+        .map(function (part) {
+          return part && part.text;
+        })
+        .filter(function (text) {
+          return typeof text === "string" && text.trim().length > 0;
+        });
+
+      return texts.length > 0 ? texts.join("\n\n") : "模型沒有產生可顯示的文字。";
+    }
+
+    function wait(ms) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+      });
+    }
+
+    function isHighDemandError(statusCode, message) {
+      const text = (message || "").toLowerCase();
+      return statusCode === 429 || statusCode === 503 || text.includes("high demand") || text.includes("resource exhausted");
+    }
+
+    function isModelNotFoundError(statusCode, message) {
+      const text = (message || "").toLowerCase();
+      return statusCode === 404 || text.includes("is not found") || text.includes("not supported for generatecontent");
+    }
+
+    function normalizeModelName(name) {
+      return String(name || "").replace(/^models\//, "").trim();
+    }
+
+    function uniqueModels(models) {
+      const seen = new Set();
+      return models.filter(function (name) {
+        if (!name || seen.has(name)) {
+          return false;
+        }
+        seen.add(name);
+        return true;
+      });
+    }
+
+    async function fetchAvailableGenerateModels(apiKey, forceRefresh) {
+      if (cachedGenerateModels && !forceRefresh) {
+        return cachedGenerateModels;
+      }
+
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models?key=" + encodeURIComponent(apiKey);
+      const response = await fetch(endpoint);
+      const data = await response.json().catch(function () {
+        return {};
+      });
+
+      if (!response.ok) {
+        const message = (data && data.error && data.error.message) || ("HTTP " + response.status);
+        const error = new Error(message);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      const models = Array.isArray(data && data.models) ? data.models : [];
+      cachedGenerateModels = uniqueModels(
+        models
+          .filter(function (item) {
+            const methods = item && item.supportedGenerationMethods;
+            return Array.isArray(methods) && methods.includes("generateContent");
+          })
+          .map(function (item) {
+            return normalizeModelName(item && item.name);
+          })
+      );
+
+      return cachedGenerateModels;
+    }
+
+    async function resolveModelPlan(apiKey) {
+      try {
+        const available = await fetchAvailableGenerateModels(apiKey, false);
+        if (!Array.isArray(available) || available.length === 0) {
+          return [PRIMARY_MODEL];
+        }
+
+        const preferred = PREFERRED_MODELS.filter(function (name) {
+          return available.includes(name);
+        });
+        const flashOthers = available.filter(function (name) {
+          return name.includes("flash") && !preferred.includes(name);
+        });
+        const remaining = available.filter(function (name) {
+          return !preferred.includes(name) && !flashOthers.includes(name);
+        });
+
+        const plan = uniqueModels(preferred.concat(flashOthers).concat(remaining));
+        return plan.length > 0 ? plan : [PRIMARY_MODEL];
+      } catch (error) {
+        return [PRIMARY_MODEL];
+      }
+    }
+
+    async function requestWithModel(apiKey, question, modelName) {
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + modelName + ":generateContent?key=" + encodeURIComponent(apiKey);
+      const payload = {
+        contents: [
+          {
+            parts: [{ text: question }]
+          }
+        ]
+      };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(function () {
+        return {};
+      });
+
+      if (!response.ok) {
+        const message = (data && data.error && data.error.message) || ("HTTP " + response.status);
+        const error = new Error(message);
+        error.statusCode = response.status;
+        throw error;
+      }
+
+      return data;
+    }
+
+    async function getAnswerWithRetryAndFallback(apiKey, question) {
+      const modelPlan = await resolveModelPlan(apiKey);
+      let lastError = null;
+
+      for (let modelIndex = 0; modelIndex < modelPlan.length; modelIndex += 1) {
+        const modelName = modelPlan[modelIndex];
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+          try {
+            const data = await requestWithModel(apiKey, question, modelName);
+            return {
+              data: data,
+              usedModel: modelName,
+              usedFallback: modelIndex > 0
+            };
+          } catch (error) {
+            lastError = error;
+
+            if (isModelNotFoundError(error.statusCode, error.message)) {
+              if (modelIndex < modelPlan.length - 1) {
+                setStatus("模型「" + modelName + "」不可用，切換下一個模型...");
+              }
+              break;
+            }
+
+            if (isHighDemandError(error.statusCode, error.message) && attempt < MAX_RETRIES) {
+              setStatus("模型流量高，正在重試...（" + (attempt + 1) + "/" + MAX_RETRIES + "）");
+              await wait(800 * (attempt + 1));
+              continue;
+            }
+
+            break;
+          }
+        }
+
+        if (lastError && isModelNotFoundError(lastError.statusCode, lastError.message) && modelIndex === 0) {
+          try {
+            await fetchAvailableGenerateModels(apiKey, true);
+          } catch (error) {
+            // Ignore refresh failures and continue fallback sequence.
+          }
+        }
+
+        if (lastError && isHighDemandError(lastError.statusCode, lastError.message) && modelIndex < modelPlan.length - 1) {
+          setStatus("目前模型忙碌，切換其他可用模型中...");
+          continue;
+        }
+
+        if (lastError && !isModelNotFoundError(lastError.statusCode, lastError.message) && !isHighDemandError(lastError.statusCode, lastError.message)) {
+          break;
+        }
+      }
+
+      throw lastError || new Error("無可用模型可回覆。");
+    }
+
+    function initializeApiKey() {
+      try {
+        const savedApiKey = localStorage.getItem(API_KEY_STORAGE);
+        const currentInput = apiKeyInput.value.trim();
+        const finalApiKey = currentInput || savedApiKey || DEFAULT_API_KEY;
+
+        if (finalApiKey) {
+          apiKeyInput.value = finalApiKey;
+          localStorage.setItem(API_KEY_STORAGE, finalApiKey);
+        }
+      } catch (error) {
+        setStatus("無法讀取本機設定，仍可手動輸入金鑰。", true);
+      }
+    }
+
+    applyKeyBtn.addEventListener("click", function () {
+      const apiKey = apiKeyInput.value.trim();
+      if (!apiKey) {
+        setStatus("請先輸入 API Key，再按套用設定。", true);
+        apiKeyInput.focus();
+        return;
+      }
+
+      try {
+        localStorage.setItem(API_KEY_STORAGE, apiKey);
+        setStatus("API Key 已套用並儲存。", false);
+      } catch (error) {
+        setStatus("儲存設定失敗，請檢查瀏覽器儲存權限。", true);
+      }
+    });
+
+    initializeApiKey();
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const apiKey = apiKeyInput.value.trim();
+      const question = questionInput.value.trim();
+
+      if (!apiKey) {
+        setStatus("請先輸入 Gemini API Key。", true);
+        apiKeyInput.focus();
+        return;
+      }
+
+      if (!question) {
+        setStatus("請先輸入問題內容。", true);
+        questionInput.focus();
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setStatus("送出中，請稍候...");
+      responseEl.textContent = "正在等待 Gemini 回覆...";
+
+      try {
+        const result = await getAnswerWithRetryAndFallback(apiKey, question);
+        const answer = pickResponseText(result.data);
+        responseEl.textContent = answer;
+        if (result.usedFallback) {
+          setStatus("已收到回覆（已自動切換備援模型：" + result.usedModel + "）。", false);
+        } else {
+          setStatus("已收到回覆（模型：" + result.usedModel + "）。", false);
+        }
+      } catch (error) {
+        responseEl.textContent = "無法取得回覆。若是高流量，可稍後重試或改用較短問題。";
+
+        if (isHighDemandError(error && error.statusCode, error && error.message)) {
+          setStatus("目前模型流量過高，已嘗試重試與備援，請稍後再試。", true);
+        } else if (isModelNotFoundError(error && error.statusCode, error && error.message)) {
+          setStatus("模型名稱不可用，已嘗試自動切換；請再送出一次或更換 API Key。", true);
+        } else {
+          setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
+        }
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
