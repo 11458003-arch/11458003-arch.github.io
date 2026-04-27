@@ -10,14 +10,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-1: #f4efe6;
-      --bg-2: #e5f0e0;
-      --ink: #1e2a23;
-      --muted: #4c5f55;
-      --card: rgba(255, 255, 255, 0.78);
-      --line: rgba(30, 42, 35, 0.12);
-      --accent: #c55c2d;
-      --accent-2: #2f6a52;
+      --bg-1: #fff2f8;
+      --bg-2: #edfcef;
+      --ink: #2e4037;
+      --muted: #587366;
+      --card: rgba(255, 255, 255, 0.86);
+      --line: rgba(92, 136, 114, 0.2);
+      --accent: #f49ac2;
+      --accent-2: #79be98;
     }
 
     * {
@@ -29,8 +29,10 @@
       min-height: 100vh;
       font-family: "Noto Sans TC", sans-serif;
       color: var(--ink);
-      background: radial-gradient(circle at 15% 0%, #fff8ef 0, transparent 40%),
-                  radial-gradient(circle at 85% 20%, #dcebd5 0, transparent 35%),
+      background: radial-gradient(circle at 8% 5%, #ffdfee 0, transparent 34%),
+                  radial-gradient(circle at 24% 78%, #ffe7f3 0, transparent 30%),
+                  radial-gradient(circle at 78% 14%, #dff7e6 0, transparent 36%),
+                  radial-gradient(circle at 92% 76%, #e7ffef 0, transparent 32%),
                   linear-gradient(145deg, var(--bg-1), var(--bg-2));
       overflow-x: hidden;
     }
@@ -52,7 +54,7 @@
       height: 280px;
       right: -80px;
       top: -70px;
-      background: linear-gradient(135deg, #ef8f5e, #e8bd6e);
+      background: linear-gradient(135deg, #ffb6d8, #ffd8ea);
     }
 
     body::after {
@@ -60,7 +62,7 @@
       height: 220px;
       left: -70px;
       bottom: -60px;
-      background: linear-gradient(135deg, #5f9a7e, #a6d4b0);
+      background: linear-gradient(135deg, #8cd3a9, #d8f6e0);
     }
 
     .wrap {
@@ -85,7 +87,7 @@
       display: inline-block;
       padding: 7px 12px;
       border-radius: 999px;
-      border: 1px solid rgba(47, 106, 82, 0.28);
+      border: 1px solid rgba(104, 162, 126, 0.32);
       color: var(--accent-2);
       font-weight: 700;
       letter-spacing: 0.03em;
@@ -228,7 +230,7 @@
       border-radius: 22px;
       padding: 22px;
       background: rgba(255, 255, 255, 0.82);
-      box-shadow: 0 8px 24px rgba(30, 42, 35, 0.09);
+      box-shadow: 0 8px 24px rgba(85, 131, 107, 0.16);
       transform: translateY(14px);
       opacity: 0;
       animation: rise 0.8s ease forwards;
@@ -274,9 +276,9 @@
       margin-bottom: 16px;
       border-radius: 14px;
       overflow: hidden;
-      border: 1px solid rgba(30, 42, 35, 0.14);
-      box-shadow: 0 8px 20px rgba(30, 42, 35, 0.12);
-      background: #f7f6f2;
+      border: 1px solid rgba(103, 151, 124, 0.24);
+      box-shadow: 0 8px 20px rgba(92, 140, 114, 0.18);
+      background: #fff6fc;
       text-decoration: none;
     }
 
@@ -317,14 +319,14 @@
       font-size: 0.82rem;
       font-weight: 700;
       color: #fff;
-      background: rgba(30, 42, 35, 0.74);
+      background: rgba(102, 151, 124, 0.8);
       backdrop-filter: blur(2px);
       letter-spacing: 0.02em;
     }
 
     .thumb:hover,
     .thumb:focus-visible {
-      outline: 2px solid rgba(197, 92, 45, 0.45);
+      outline: 2px solid rgba(130, 196, 157, 0.64);
       outline-offset: 2px;
     }
 
@@ -335,20 +337,20 @@
       font-weight: 700;
       border-radius: 999px;
       padding: 10px 18px;
-      background: linear-gradient(135deg, var(--accent), #cf7b38);
-      box-shadow: 0 8px 16px rgba(197, 92, 45, 0.24);
+      background: linear-gradient(135deg, var(--accent), #ffc8e1);
+      box-shadow: 0 8px 16px rgba(233, 141, 183, 0.3);
       transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
 
     .btn.alt {
-      background: linear-gradient(135deg, var(--accent-2), #6f9f6b);
-      box-shadow: 0 8px 16px rgba(47, 106, 82, 0.24);
+      background: linear-gradient(135deg, var(--accent-2), #a7dcbf);
+      box-shadow: 0 8px 16px rgba(105, 178, 136, 0.3);
     }
 
     .btn:hover,
     .btn:focus-visible {
       transform: translateY(-2px);
-      box-shadow: 0 12px 18px rgba(30, 42, 35, 0.2);
+      box-shadow: 0 12px 18px rgba(91, 145, 114, 0.3);
     }
 
     .footer {
@@ -457,20 +459,20 @@
           <span class="thumb-label">現場預覽</span>
           <iframe src="4/index.html" title="Gemini 聊天機器人預覽" loading="lazy"></iframe>
         </a>
-        <p>可輸入 Gemini API Key 與問題，使用 Gemini 2.5 Flash 取得即時文字回覆。</p>
+        <p>支援 Gemini API Key、示範模式、多輪對話與手機版面，並以 Gemini 2.5 Flash 即時回覆。</p>
         <a class="btn alt" href="4/index.html">前往使用</a>
       </article>
 
       <article class="card">
-        <h3>5. 20260319日本行</h3>
-        <a class="thumb" href="5/index.html" aria-label="20260319日本行縮圖，點擊前往查看">
+        <h3>100. 20260319日本行</h3>
+        <a class="thumb" href="100/index.html" aria-label="20260319日本行縮圖，點擊前往查看">
           <span class="thumb-label">影片預覽</span>
           <video autoplay muted loop playsinline preload="metadata" aria-hidden="true">
             <source src="assets/video.mp4" type="video/mp4" />
           </video>
         </a>
         <p>20260319 日本行影片紀錄，支援 HTML5 播放器與自動播放，手機與桌面都能流暢觀看。</p>
-        <a class="btn" href="5/index.html">前往查看</a>
+        <a class="btn" href="100/index.html">前往查看</a>
       </article>
 
     </section>
