@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Chat | Folder 4</title>
+  <meta name="description" content="Gemini 2.5 Flash 對話頁，支援 API Key 設定、多輪紀錄與快捷送出。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050b18;
+      --bg-2: #071329;
+      --panel: rgba(11, 21, 40, 0.86);
+      --panel-2: rgba(8, 16, 31, 0.88);
+      --line: rgba(164, 188, 231, 0.22);
+      --text: #eaf1ff;
+      --muted: #9fb0cf;
+      --primary: #49a4ff;
+      --primary-2: #2f78d8;
+      --danger: #ff8080;
+      --ok: #75e4b3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% -5%, rgba(71, 137, 255, 0.23), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(21, 101, 216, 0.2), transparent 32%),
+        linear-gradient(145deg, var(--bg), var(--bg-2));
+      padding: 28px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+    }
+
+    .hero {
+      margin-bottom: 14px;
+      animation: showUp 0.45s ease;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 4.6vw, 3.2rem);
+      font-family: "Space Grotesk", sans-serif;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 6px 0 12px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 12px;
+      color: #d9e7ff;
+      font-size: 0.88rem;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 252px 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      min-height: 590px;
+      padding: 14px;
+      background: linear-gradient(170deg, rgba(17, 31, 59, 0.8), rgba(10, 20, 40, 0.95));
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      min-height: 590px;
+      padding: 10px;
+      background: linear-gradient(160deg, rgba(17, 28, 50, 0.86), rgba(9, 18, 34, 0.9));
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      line-height: 1.2;
+    }
+
+    .settings-title {
+      margin: 0;
+      font-size: 1.85rem;
+      font-weight: 800;
+    }
+
+    .desc {
+      margin: 8px 0 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+      margin: 0 0 10px;
+      font-weight: 700;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 11px 12px;
+      width: 100%;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: rgba(73, 164, 255, 0.7);
+      box-shadow: 0 0 0 3px rgba(73, 164, 255, 0.16);
+    }
+
+    .model-pill {
+      margin: 6px 0 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .key-display {
+      margin: 6px 0 12px;
+      padding: 8px 10px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      color: #c6d8fb;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      word-break: break-all;
+      background: rgba(12, 24, 44, 0.55);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      color: #e7f0ff;
+      background: linear-gradient(180deg, rgba(35, 59, 97, 0.9), rgba(20, 38, 70, 0.9));
+      padding: 9px 10px;
+      font-weight: 700;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(114, 188, 255, 0.65);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--primary-2), var(--primary));
+      color: #ffffff;
+      border: 1px solid rgba(141, 210, 255, 0.52);
+    }
+
+    .inline-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 9px;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .switch-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #64779f;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
+      transition: background 0.2s ease;
+    }
+
+    .inline-switch.on .switch-dot {
+      background: var(--ok);
+    }
+
+    .recent {
+      margin-top: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(8, 16, 30, 0.52);
+      min-height: 160px;
+    }
+
+    .recent h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+
+    .recent-list {
+      list-style: disc;
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      display: grid;
+      gap: 7px;
+      font-size: 0.9rem;
+    }
+
+    .main-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 2px 10px;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      white-space: nowrap;
+      background: rgba(7, 16, 31, 0.9);
+    }
+
+    .badge.ready {
+      color: var(--ok);
+      border-color: rgba(117, 228, 179, 0.5);
+    }
+
+    .response {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(160deg, rgba(8, 20, 39, 0.9), rgba(7, 13, 25, 0.96));
+      min-height: 345px;
+      max-height: 52vh;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      overflow-y: auto;
+      margin: 0 2px 12px;
+    }
+
+    .bubble-row {
+      display: flex;
+    }
+
+    .bubble-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble-row.ai {
+      justify-content: flex-start;
+    }
+
+    .bubble {
+      max-width: min(78%, 700px);
+      border-radius: 12px;
+      border: 1px solid rgba(160, 190, 235, 0.22);
+      padding: 10px 12px;
+      background: rgba(15, 29, 55, 0.84);
+      line-height: 1.65;
+      box-shadow: 0 8px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .bubble.user {
+      background: rgba(54, 98, 171, 0.55);
+      border-color: rgba(109, 188, 255, 0.45);
+    }
+
+    .bubble small {
+      display: block;
+      margin-bottom: 4px;
+      color: #9fc4ff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+    }
+
+    .bubble p {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .placeholder {
+      margin: 0;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    .label {
+      margin: 0 2px 6px;
+      font-weight: 700;
+      color: #d9e8ff;
+    }
+
+    .composer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin: 0 2px;
+      align-items: end;
+    }
+
+    .composer textarea {
+      min-height: 82px;
+      max-height: 180px;
+      resize: vertical;
+    }
+
+    .send {
+      min-width: 108px;
+      min-height: 46px;
+      border-radius: 12px;
+    }
+
+    .meta,
+    .status {
+      margin: 8px 2px 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    @keyframes showUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        padding: 14px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .settings,
+      .main {
+        min-height: auto;
+      }
+
+      .main-head {
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+
+      .response {
+        max-height: 50vh;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 10px;
+      }
+
+      .hero {
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        font-size: clamp(1.9rem, 10vw, 2.4rem);
+      }
+
+      .subtitle {
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      .settings,
+      .main {
+        padding: 10px;
+      }
+
+      .settings-title,
+      .section-title {
+        font-size: 1.45rem;
+      }
+
+      .badge {
+        white-space: normal;
+      }
+
+      .response {
+        min-height: 280px;
+        max-height: 44vh;
+        padding: 10px;
+      }
+
+      .bubble {
+        max-width: 92%;
+      }
+
+      .composer {
+        grid-template-columns: 1fr;
+      }
+
+      .send {
+        width: 100%;
+        min-height: 42px;
+      }
+
+      .btn-row {
+        grid-template-columns: 1fr;
+      }
+
+      .recent {
+        min-height: 120px;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .chip {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+      }
+
+      .desc,
+      .meta,
+      .status {
+        font-size: 0.85rem;
+      }
+
+      input,
+      textarea,
+      .btn {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="hero">
+      <h1>Gemini Chat</h1>
+      <p class="subtitle">串接 Google Gemini API，提供可直接提問的對話介面，並保留乾淨直覺的操作流程。</p>
+      <div class="chips">
+        <span class="chip">AI 對話</span>
+        <span class="chip">API 整合</span>
+        <span class="chip">介面設計</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <aside class="card settings">
+        <h2 class="settings-title">連線設定</h2>
+        <p class="desc">固定使用 Gemini 2.5 Flash。先貼上 API Key，再輸入問題送出即可。</p>
+
+        <label class="control" for="api-key">Gemini API Key
+          <input id="api-key" type="password" placeholder="貼上你的 Gemini API Key" autocomplete="off" />
+        </label>
+        <p class="key-display">目前設定 KEY：未設定</p>
+
+        <p class="model-pill">模型：gemini-2.5-flash（固定）</p>
+
+        <div class="btn-row">
+          <button id="apply-btn" class="btn" type="button">套用設定</button>
+          <button id="clear-btn" class="btn" type="button">清除對話</button>
+        </div>
+
+        <button id="demo-btn" class="btn" type="button">示範模式：關</button>
+
+        <div id="demo-state" class="inline-switch">
+          <span class="switch-dot" aria-hidden="true"></span>
+          <span>示範模式：關</span>
+        </div>
+
+        <section class="recent">
+          <h3>最近提問</h3>
+          <ul id="recent-list" class="recent-list">
+            <li>目前還沒有提問紀錄。</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="card main">
+        <div class="main-head">
+          <h2 class="section-title">AI 回應視窗（設計者 林宜君）</h2>
+          <span id="key-state" class="badge">尚未設定 API Key</span>
+        </div>
+
+        <div id="response" class="response" aria-live="polite">
+          <p class="placeholder">已預設使用 Gemini 2.5 Flash。先貼上 API Key，再輸入問題即可開始。</p>
+        </div>
+
+        <form id="chat-form" novalidate>
+          <p class="label">輸入問題</p>
+          <div class="composer">
+            <textarea id="question" placeholder="輸入你的問題，按 Enter 送出；Shift + Enter 換行。" required></textarea>
+            <button id="send-btn" class="btn primary send" type="submit">送出訊息</button>
+          </div>
+        </form>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <p class="meta">提醒：API Key 僅在目前頁面使用，不會寫入檔案。</p>
+        <p class="meta"><strong>設計者：林宜君</strong></p>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const MODEL_NAME = "gemini-2.5-flash";
+    const API_KEY_STORAGE_KEY = "gemini_chat_api_key";
+    const DEMO_STORAGE_KEY = "gemini_chat_demo_mode";
+    const MAX_QUESTION_LENGTH = 1200;
+    const MAX_RECENT = 5;
+    const GENERATION_CONFIG = {
+      maxOutputTokens: 1024,
+      temperature: 0.6,
+      topP: 0.9
+    };
+
+    const state = {
+      apiKey: "",
+      demoMode: false,
+      history: [],
+      recent: []
+    };
+
+    const apiKeyInput = document.getElementById("api-key");
+    const applyBtn = document.getElementById("apply-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const demoBtn = document.getElementById("demo-btn");
+    const demoState = document.getElementById("demo-state");
+    const recentList = document.getElementById("recent-list");
+    const keyStateEl = document.getElementById("key-state");
+    const responseEl = document.getElementById("response");
+    const form = document.getElementById("chat-form");
+    const questionInput = document.getElementById("question");
+    const sendBtn = document.getElementById("send-btn");
+    const statusEl = document.getElementById("status");
+
+    function isLikelyGeminiKey(key) {
+      return /^AIza[0-9A-Za-z_-]{35}$/.test(String(key || "").trim());
+    }
+
+    function setStatus(message, isError) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", Boolean(isError));
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem(API_KEY_STORAGE_KEY, state.apiKey);
+        localStorage.setItem(DEMO_STORAGE_KEY, state.demoMode ? "1" : "0");
+      } catch (error) {
+        // Ignore storage restrictions.
+      }
+    }
+
+    function loadLocal() {
+      try {
+        state.apiKey = localStorage.getItem(API_KEY_STORAGE_KEY) || "";
+        state.demoMode = localStorage.getItem(DEMO_STORAGE_KEY) === "1";
+      } catch (error) {
+        state.apiKey = "";
+        state.demoMode = false;
+      }
+    }
+
+    function updateKeyState() {
+      const ready = isLikelyGeminiKey(state.apiKey);
+      keyStateEl.textContent = ready ? "API Key 已設定" : "尚未設定 API Key";
+      keyStateEl.classList.toggle("ready", ready);
+    }
+
+    function updateDemoState() {
+      const text = state.demoMode ? "示範模式：開" : "示範模式：關";
+      demoBtn.textContent = text;
+      demoState.querySelector("span:last-child").textContent = text;
+      demoState.classList.toggle("on", state.demoMode);
+    }
+
+    function addRecentQuestion(question) {
+      state.recent.unshift(question);
+      state.recent = state.recent.slice(0, MAX_RECENT);
+      renderRecent();
+    }
+
+    function renderRecent() {
+      recentList.innerHTML = "";
+      if (state.recent.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "目前還沒有提問紀錄。";
+        recentList.appendChild(li);
+        return;
+      }
+
+      for (let i = 0; i < state.recent.length; i += 1) {
+        const li = document.createElement("li");
+        li.textContent = state.recent[i];
+        recentList.appendChild(li);
+      }
+    }
+
+    function createBubble(role, label, text) {
+      const row = document.createElement("div");
+      row.className = "bubble-row " + role;
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble " + role;
+
+      const small = document.createElement("small");
+      small.textContent = label;
+
+      const p = document.createElement("p");
+      p.textContent = text;
+
+      bubble.appendChild(small);
+      bubble.appendChild(p);
+      row.appendChild(bubble);
+      return row;
+    }
+
+    function renderHistory() {
+      responseEl.innerHTML = "";
+
+      if (state.history.length === 0) {
+        const p = document.createElement("p");
+        p.className = "placeholder";
+        p.textContent = "已預設使用 Gemini 2.5 Flash。先貼上 API Key，再輸入問題即可開始。";
+        responseEl.appendChild(p);
+        return;
+      }
+
+      for (let i = 0; i < state.history.length; i += 1) {
+        const item = state.history[i];
+        responseEl.appendChild(createBubble("user", "你", item.question));
+        responseEl.appendChild(createBubble("ai", "Gemini", item.answer));
+      }
+
+      responseEl.scrollTop = responseEl.scrollHeight;
+    }
+
+    function extractAnswer(data) {
+      const candidates = data && data.candidates;
+      if (!Array.isArray(candidates) || candidates.length === 0) {
+        return "模型沒有回覆內容。";
+      }
+
+      const parts = candidates[0] && candidates[0].content && candidates[0].content.parts;
+      if (!Array.isArray(parts)) {
+        return "模型回覆格式無法解析。";
+      }
+
+      const texts = parts
+        .map(function (part) { return part && part.text; })
+        .filter(function (text) { return typeof text === "string" && text.trim(); });
+      return texts.length ? texts.join("\n\n") : "模型沒有產生可顯示文字。";
+    }
+
+    async function requestGemini(apiKey, question) {
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_NAME + ":generateContent?key=" + encodeURIComponent(apiKey);
+      const payload = {
+        contents: [{ parts: [{ text: question }] }],
+        generationConfig: GENERATION_CONFIG
+      };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json().catch(function () { return {}; });
+      if (!response.ok) {
+        const message = (data && data.error && data.error.message) || ("HTTP " + response.status);
+        throw new Error(message);
+      }
+      return data;
+    }
+
+    async function requestDemoAnswer(question) {
+      await new Promise(function (resolve) { setTimeout(resolve, 600); });
+      return "[示範模式]\n你問的是：" + question + "\n\n這是模擬回覆。關閉示範模式並設定 API Key 後，會改用 Gemini 2.5 Flash 即時回答。";
+    }
+
+    function applySettings() {
+      const key = apiKeyInput.value.trim();
+      if (key && !isLikelyGeminiKey(key)) {
+        setStatus("API Key 格式看起來不正確，請確認後再套用。", true);
+        apiKeyInput.focus();
+        return;
+      }
+
+      state.apiKey = key;
+      updateKeyState();
+      saveLocal();
+      setStatus(key ? "設定已套用。" : "已清空 API Key。", false);
+    }
+
+    function clearChat() {
+      state.history = [];
+      state.recent = [];
+      renderHistory();
+      renderRecent();
+      setStatus("已清除對話。", false);
+    }
+
+    function initialize() {
+      loadLocal();
+      apiKeyInput.value = state.apiKey;
+      updateKeyState();
+      updateDemoState();
+      renderRecent();
+      renderHistory();
+    }
+
+    applyBtn.addEventListener("click", applySettings);
+    clearBtn.addEventListener("click", clearChat);
+    demoBtn.addEventListener("click", function () {
+      state.demoMode = !state.demoMode;
+      updateDemoState();
+      saveLocal();
+      setStatus(state.demoMode ? "示範模式已開啟。" : "示範模式已關閉。", false);
+    });
+
+    questionInput.addEventListener("keydown", function (event) {
+      if (event.isComposing) {
+        return;
+      }
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (!sendBtn.disabled) {
+          form.requestSubmit();
+        }
+      }
+    });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      let question = questionInput.value.trim();
+
+      if (!question) {
+        setStatus("請先輸入問題。", true);
+        questionInput.focus();
+        return;
+      }
+
+      if (question.length > MAX_QUESTION_LENGTH) {
+        question = question.slice(0, MAX_QUESTION_LENGTH);
+      }
+
+      if (!state.demoMode && !isLikelyGeminiKey(state.apiKey)) {
+        setStatus("請先設定有效 API Key，或開啟示範模式。", true);
+        return;
+      }
+
+      state.history.push({ question: question, answer: "等待回覆中..." });
+      addRecentQuestion(question);
+      renderHistory();
+      questionInput.value = "";
+      sendBtn.disabled = true;
+      setStatus("送出中...", false);
+
+      try {
+        let answer = "";
+        if (state.demoMode) {
+          answer = await requestDemoAnswer(question);
+        } else {
+          const data = await requestGemini(state.apiKey, question);
+          answer = extractAnswer(data);
+        }
+        state.history[state.history.length - 1].answer = answer;
+        renderHistory();
+        setStatus("完成（" + MODEL_NAME + "）。", false);
+      } catch (error) {
+        state.history[state.history.length - 1].answer = "目前無法取得回覆，請稍後再試。";
+        renderHistory();
+        setStatus("發生錯誤：" + ((error && error.message) || "未知錯誤"), true);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    initialize();
+  </script>
+</body>
+</html>
