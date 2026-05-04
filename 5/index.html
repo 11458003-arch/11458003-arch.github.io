@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ntfy 聊天對話窗</title>
+  <meta name="description" content="單一 index.html 的聊天室窗，透過 ntfy.sh 的 HTTPS 與 SSE 即時收發訊息。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #ffd7e7;
+      --bg-2: #ffbfd7;
+      --panel: rgba(255, 245, 248, 0.9);
+      --panel-2: rgba(255, 236, 242, 0.98);
+      --line: rgba(208, 62, 88, 0.16);
+      --ink: #c4153f;
+      --muted: #d0506b;
+      --brand: #ff4f7b;
+      --brand-2: #d61b4d;
+      --warn: #c96a00;
+      --error: #b61f3f;
+      --bubble: #fff7fa;
+      --bubble-me: #ffe3ec;
+      --shadow: 0 22px 44px rgba(190, 63, 100, 0.16);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Montserrat", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 16%, rgba(255, 79, 123, 0.16), transparent 26%),
+        radial-gradient(circle at 86% 12%, rgba(255, 184, 206, 0.24), transparent 24%),
+        radial-gradient(circle at 84% 84%, rgba(214, 27, 77, 0.08), transparent 30%),
+        linear-gradient(145deg, var(--bg-1), var(--bg-2));
+      overflow: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      width: 320px;
+      height: 320px;
+      border-radius: 999px;
+      filter: blur(12px);
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    body::before {
+      left: -110px;
+      top: -100px;
+      background: radial-gradient(circle, rgba(255, 79, 123, 0.35), transparent 68%);
+    }
+
+    body::after {
+      right: -120px;
+      bottom: -120px;
+      background: radial-gradient(circle, rgba(214, 27, 77, 0.28), transparent 68%);
+    }
+
+    .shell {
+      width: min(1260px, calc(100vw - 24px));
+      height: min(900px, calc(100vh - 24px));
+      margin: 12px auto;
+      display: grid;
+      grid-template-columns: 332px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      overflow: hidden;
+    }
+
+    .sidebar {
+      padding: 22px;
+      display: grid;
+      grid-template-rows: auto auto auto auto 1fr;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #ffffff;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 10px 22px rgba(255, 79, 123, 0.2);
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.12rem;
+      line-height: 1.2;
+    }
+
+    .brand p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 79, 123, 0.18);
+      background: rgba(255, 79, 123, 0.1);
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--brand-2);
+      box-shadow: 0 0 0 6px rgba(255, 79, 123, 0.1);
+    }
+
+    .panel-box {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .field input,
+    .field select,
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(208, 62, 88, 0.16);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .field input,
+    .field select {
+      height: 46px;
+      padding: 0 14px;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    textarea:focus {
+      border-color: rgba(255, 79, 123, 0.45);
+      box-shadow: 0 0 0 4px rgba(255, 79, 123, 0.08);
+    }
+
+    .topic-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .mini-btn,
+    .ghost-btn,
+    .send-btn,
+    .chip {
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+    }
+
+    .mini-btn,
+    .ghost-btn {
+      border: 1px solid rgba(255, 79, 123, 0.16);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 14px;
+      min-height: 46px;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+
+    .mini-btn:hover,
+    .ghost-btn:hover,
+    .send-btn:hover,
+    .chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+
+    .chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid rgba(255, 79, 123, 0.14);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 16px;
+    }
+
+    .portfolio-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .portfolio-item {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,245,248,0.98));
+      border: 1px solid rgba(255,79,123,0.06);
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .portfolio-item small {
+      display: block;
+      margin-top: 4px;
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .metric {
+      padding: 12px 13px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 79, 123, 0.08);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1rem;
+      word-break: break-all;
+    }
+
+    .main {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-width: 0;
+      background: linear-gradient(180deg, rgba(255, 250, 252, 0.94), rgba(255, 241, 246, 0.98));
+    }
+
+    .topbar {
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 79, 123, 0.08), transparent);
+    }
+
+    .title-block h2 {
+      margin: 0;
+      font-size: clamp(1.1rem, 2vw, 1.45rem);
+    }
+
+    .title-block p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .ghost-btn {
+      border-radius: 999px;
+      padding: 11px 14px;
+    }
+
+    .connection-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 22px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 79, 123, 0.04);
+    }
+
+    .connection-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .connection-meta strong {
+      color: var(--ink);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 79, 123, 0.18);
+      background: rgba(255, 79, 123, 0.08);
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .status-pill[data-state="connected"] {
+      border-color: rgba(255, 79, 123, 0.22);
+      background: rgba(255, 79, 123, 0.09);
+      color: var(--ink);
+    }
+
+    .status-pill[data-state="error"] {
+      border-color: rgba(182, 31, 63, 0.22);
+      background: rgba(182, 31, 63, 0.08);
+      color: #9f1133;
+    }
+
+    .messages {
+      padding: 22px;
+      overflow: auto;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      scroll-behavior: smooth;
+    }
+
+    .messages::-webkit-scrollbar,
+    textarea::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .messages::-webkit-scrollbar-thumb,
+    textarea::-webkit-scrollbar-thumb {
+      background: rgba(157, 177, 203, 0.24);
+      border-radius: 999px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+    }
+
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      max-width: 100%;
+      animation: rise 0.18s ease-out;
+    }
+
+    .message.me {
+      margin-left: auto;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #ffffff;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 12px 20px rgba(24, 191, 103, 0.16);
+    }
+
+    .message.me .avatar {
+      background: linear-gradient(135deg, #ff9cb8, #ff4f7b);
+    }
+
+    .bubble {
+      max-width: min(700px, calc(100% - 58px));
+      padding: 14px 16px 13px;
+      border-radius: 20px 20px 20px 8px;
+      background: var(--bubble);
+      border: 1px solid rgba(255, 79, 123, 0.08);
+      box-shadow: 0 10px 18px rgba(190, 63, 100, 0.08);
+      overflow: hidden;
+    }
+
+    .message.me .bubble {
+      border-radius: 20px 20px 8px 20px;
+      background: var(--bubble-me);
+    }
+
+    .bubble .meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .bubble .name {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .bubble .body {
+      margin: 0;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.98rem;
+    }
+
+    .bubble .body a {
+      color: var(--brand);
+    }
+
+    .notice {
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px dashed rgba(255, 79, 123, 0.18);
+      background: rgba(255, 79, 123, 0.06);
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .composer {
+      padding: 16px 18px 18px;
+      border-top: 1px solid var(--line);
+      background: linear-gradient(180deg, transparent, rgba(255, 79, 123, 0.04));
+    }
+
+    .composer-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .composer-tools {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tool-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 79, 123, 0.16);
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 1.05rem;
+    }
+
+    .tool-btn:hover { transform: translateY(-1px); }
+
+    /* Emoji panel */
+    .emoji-popover {
+      position: relative;
+      display: inline-block;
+    }
+
+    .emoji-panel {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 10px);
+      width: 320px;
+      max-width: calc(100vw - 24px);
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid rgba(208,62,88,0.08);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 8px;
+      z-index: 60;
+    }
+
+    .emoji-item {
+      font-size: 20px;
+      line-height: 28px;
+      padding: 6px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s ease, transform 0.08s ease;
+    }
+
+    .emoji-item:hover {
+      background: rgba(255,79,123,0.06);
+      transform: translateY(-3px);
+    }
+    /* 用於快速隱藏暫存或不想公開的連結 */
+    .hidden { display: none !important; }
+
+    .input-box {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    textarea {
+      min-height: 76px;
+      max-height: 200px;
+      resize: vertical;
+      padding: 15px 16px;
+      line-height: 1.65;
+    }
+
+    .hint-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .send-btn {
+      min-width: 124px;
+      min-height: 56px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      font-weight: 900;
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      box-shadow: 0 14px 26px rgba(255, 79, 123, 0.18);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .typing {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 24px;
+      justify-content: flex-end;
+      padding-bottom: 4px;
+    }
+
+    .typing span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--brand);
+      animation: bounce 1.1s infinite ease-in-out;
+    }
+
+    .typing span:nth-child(2) { animation-delay: 0.14s; }
+    .typing span:nth-child(3) { animation-delay: 0.28s; }
+
+    .muted-link {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .muted-link:hover {
+      color: var(--brand);
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+      40% { transform: translateY(-5px); opacity: 1; }
+    }
+
+    @media (max-width: 1020px) {
+      body { overflow: auto; }
+      .shell {
+        height: auto;
+        min-height: calc(100vh - 24px);
+        grid-template-columns: 1fr;
+      }
+
+      .main {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100vw - 12px, 1260px);
+        margin: 6px auto;
+        min-height: calc(100vh - 12px);
+      }
+
+      body {
+        overflow: auto;
+      }
+
+      .sidebar,
+      .topbar,
+      .connection-bar,
+      .messages,
+      .composer {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .sidebar {
+        gap: 12px;
+      }
+
+      .brand-row {
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .brand h1 {
+        font-size: 1rem;
+      }
+
+      .brand p,
+      .title-block p,
+      .connection-meta,
+      .hint-row,
+      .metric span,
+      .metric strong,
+      .bubble .body,
+      .notice {
+        font-size: 0.86rem;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .chips {
+        padding: 0 12px 12px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .top-actions {
+        justify-content: stretch;
+      }
+
+      .connection-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .composer-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .composer-tools {
+        flex-direction: row;
+        gap: 8px;
+      }
+
+      .send-btn {
+        width: 100%;
+        min-height: 50px;
+      }
+
+      .bubble {
+        max-width: calc(100% - 54px);
+      }
+
+      .message {
+        gap: 10px;
+      }
+
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+      }
+
+      .bubble {
+        padding: 12px 13px 11px;
+      }
+
+      .title-block h2 {
+        font-size: 1.02rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside class="card sidebar">
+      <div class="brand-row">
+        <div class="brand">
+          <div class="logo">N</div>
+          <div>
+            <h1>ntfy 聊天窗</h1>
+            <p>單檔 HTML，透過 HTTPS 與 SSE 即時通訊</p>
+          </div>
+        </div>
+        <div class="status-chip"><span class="status-dot"></span>線上</div>
+      </div>
+
+      <div class="panel-box form-grid">
+        <div class="field">
+          <label for="topicInput">Topic</label>
+          <div class="topic-row">
+            <input id="topicInput" type="text" placeholder="例如：arch-chat-20260504" />
+            <button class="mini-btn" id="randomBtn" type="button">隨機</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="nameInput">你的名字</label>
+          <input id="nameInput" type="text" maxlength="32" placeholder="例如：林宜君" />
+        </div>
+
+        <div class="field">
+          <label for="modeSelect">模式</label>
+          <select id="modeSelect">
+            <option value="live">即時聊天室</option>
+            <option value="private">私人測試</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>連線控制</label>
+          <div class="topic-row">
+            <button class="ghost-btn" id="connectBtn" type="button">連線</button>
+            <button class="ghost-btn" id="disconnectBtn" type="button">中斷</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div class="metrics">
+          <div class="metric">
+            <span>連線狀態</span>
+            <strong id="sideStatus">未連線</strong>
+          </div>
+          <div class="metric">
+            <span>訊息數</span>
+            <strong id="messageCount">0</strong>
+          </div>
+          <div class="metric">
+            <span>目前 Topic</span>
+            <strong id="topicLabel">-</strong>
+          </div>
+          <div class="metric">
+            <span>來源</span>
+            <strong>https://ntfy.sh</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div class="chips">
+          <button class="chip" type="button" data-text="大家好，我進來了。">大家好</button>
+          <button class="chip" type="button" data-text="這個聊天窗是用 ntfy.sh 做的。">介紹一下</button>
+          <button class="chip" type="button" data-text="請問有人在線上嗎？">詢問在線</button>
+          <button class="chip" type="button" data-text="收到，我晚點再回。">晚點回覆</button>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div style="padding:16px">
+          <h3 style="margin:0 0 8px">作品集</h3>
+          <div class="portfolio-list">
+            <a class="portfolio-item" href="/1/index.html" target="_blank">專案 1 <small>靜態頁面展示</small></a>
+            <a class="portfolio-item" href="/4/index.html" target="_blank">專案 4 <small>作品範例</small></a>
+            <a class="portfolio-item" href="/2/index.html" target="_blank">專案 2 <small>互動範例</small></a>
+            <a class="portfolio-item" href="/3/index.html" target="_blank">專案 3 <small>作品說明</small></a>
+            <a class="portfolio-item" href="/458019/index.html" target="_blank">專案 458019 <small>子目錄示例</small></a>
+            <a class="portfolio-item" href="/458020/index.html" target="_blank">專案 458020 <small>子目錄示例</small></a>
+            <a class="portfolio-item hidden" href="/4.5/index.html" target="_blank">專案 4.5 <small>示範資料夾</small></a>
+            <a class="portfolio-item" href="/5/index.html" target="_blank">本頁 (Chat Demo) <small>即時聊天範例</small></a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="card main" aria-label="聊天主區域">
+      <header class="topbar">
+        <div class="title-block">
+          <h2>聊天對話窗</h2>
+          <p>
+            使用標準 HTTPS 發送訊息到 <a class="muted-link" href="https://ntfy.sh" target="_blank" rel="noreferrer">ntfy.sh</a>，
+            並透過 <code>/{topic}/sse</code> 訂閱同一個 topic 的即時內容。
+          </p>
+        </div>
+        <div class="top-actions">
+          <button class="ghost-btn" id="copyLinkBtn" type="button">複製 Topic 連結</button>
+          <button class="ghost-btn" id="clearBtn" type="button">清空畫面</button>
+        </div>
+      </header>
+
+      <div class="connection-bar">
+        <div class="connection-meta">
+          <span>Topic URL: <strong id="topicUrl">-</strong></span>
+          <span>發送方式: <strong>POST https://ntfy.sh/&lt;topic&gt;</strong></span>
+        </div>
+        <div class="status-pill" id="statusPill" data-state="idle">尚未連線</div>
+      </div>
+
+      <div class="messages" id="messages" aria-live="polite" aria-label="訊息列表">
+        <div class="notice">
+          先輸入 Topic 並按「連線」。之後你和其他裝置只要使用相同 Topic，就能透過 ntfy.sh 即時收發訊息。
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="typing-wrap" id="typingWrap" aria-hidden="true"></div>
+        <div class="composer-row">
+          <div class="composer-tools">
+            <div class="emoji-popover">
+              <button class="tool-btn" id="emojiBtn" type="button" title="插入表情符號">😊</button>
+              <div id="emojiPanel" class="emoji-panel" aria-hidden="true" style="display:none"></div>
+            </div>
+            <button class="tool-btn" id="systemBtn" type="button" title="插入系統提示">✦</button>
+          </div>
+
+          <div class="input-box">
+            <textarea id="messageInput" placeholder="輸入訊息，Enter 送出，Shift+Enter 換行"></textarea>
+            <div class="hint-row">
+              <span>Enter 送出，Shift+Enter 換行</span>
+              <span id="charCount">0 / 280</span>
+            </div>
+          </div>
+
+          <button class="send-btn" id="sendBtn" type="button" disabled>送出訊息</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "ntfy_chat_window_v1";
+    const MAX_LENGTH = 280;
+    const DEFAULT_TOPIC = "drher";
+    const DEFAULT_NAME = "Yi Chun";
+
+    const topicInput = document.getElementById("topicInput");
+    const nameInput = document.getElementById("nameInput");
+    const modeSelect = document.getElementById("modeSelect");
+    const randomBtn = document.getElementById("randomBtn");
+    const connectBtn = document.getElementById("connectBtn");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+    const copyLinkBtn = document.getElementById("copyLinkBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const emojiBtn = document.getElementById("emojiBtn");
+    const systemBtn = document.getElementById("systemBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const messageInput = document.getElementById("messageInput");
+    const messagesEl = document.getElementById("messages");
+    const typingWrap = document.getElementById("typingWrap");
+    const charCount = document.getElementById("charCount");
+    const statusPill = document.getElementById("statusPill");
+    const sideStatus = document.getElementById("sideStatus");
+    const messageCount = document.getElementById("messageCount");
+    const topicLabel = document.getElementById("topicLabel");
+    const topicUrl = document.getElementById("topicUrl");
+
+    let eventSource = null;
+    let connectedTopic = "";
+    let messageTotal = 0;
+    const seenIds = new Set();
+
+    restoreState();
+    updateTopicDisplay();
+    updateControls();
+
+    if (normalizeTopic(topicInput.value)) {
+      window.setTimeout(() => connect(), 200);
+    }
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        insertText(chip.dataset.text || "");
+        messageInput.focus();
+      });
+    });
+
+    randomBtn.addEventListener("click", () => {
+      topicInput.value = generateTopic();
+      updateTopicDisplay();
+      persistState();
+    });
+
+    connectBtn.addEventListener("click", () => {
+      connect();
+    });
+
+    disconnectBtn.addEventListener("click", () => {
+      disconnect(true);
+    });
+
+    copyLinkBtn.addEventListener("click", async () => {
+      const topic = normalizeTopic(topicInput.value);
+      if (!topic) return;
+      try {
+        await navigator.clipboard.writeText(`https://ntfy.sh/${topic}`);
+        flashStatus("已複製 Topic 連結");
+      } catch {
+        flashStatus("複製失敗，請手動複製 Topic");
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      messagesEl.innerHTML = "";
+      appendNotice("畫面已清空，伺服器端訊息不會被刪除。");
+      seenIds.clear();
+      messageTotal = 0;
+      updateMessageCount();
+    });
+
+    // 更豐富的表情面板行為
+    const EMOJIS = [
+      '😀','😁','😂','🤣','😅','😊','🙂','🙃','😉','😍','😘','🤗','🤩','😎','😇','🤔','🤨','🙄','😴','😪',
+      '😳','😱','😤','😭','😡','🤯','🤫','🤭','🤐','🤢','👍','👎','👏','🙏','💪','🤝','🎉','🔥','🌟',
+      '💖','💔','🌈','☀️','🌧️','🍀','🍕','🍺','🍰','🥳','🤖','🧠','🎧','📷','💡','🔔','✅','❌','⭐','🌸'
+    ];
+
+    function buildEmojiPanel() {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      panel.innerHTML = '';
+      EMOJIS.forEach((e) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'emoji-item';
+        btn.textContent = e;
+        btn.title = e;
+        btn.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          insertText(e + ' ');
+          hideEmojiPanel();
+        });
+        panel.appendChild(btn);
+      });
+    }
+
+    function showEmojiPanel() {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      panel.style.display = '';
+      panel.setAttribute('aria-hidden', 'false');
+    }
+
+    function hideEmojiPanel() {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      panel.style.display = 'none';
+      panel.setAttribute('aria-hidden', 'true');
+    }
+
+    function toggleEmojiPanel(e) {
+      e.stopPropagation();
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      if (panel.style.display === 'none' || panel.style.display === '') {
+        showEmojiPanel();
+      } else {
+        hideEmojiPanel();
+      }
+    }
+
+    buildEmojiPanel();
+    emojiBtn.addEventListener('click', toggleEmojiPanel);
+    systemBtn.addEventListener("click", () => insertText("[系統] "));
+    sendBtn.addEventListener("click", sendMessage);
+
+    // 點擊外部或按 ESC 收起面板
+    document.addEventListener('click', (ev) => {
+      const panel = document.getElementById('emojiPanel');
+      if (!panel) return;
+      const root = document.querySelector('.emoji-popover');
+      if (!root.contains(ev.target)) hideEmojiPanel();
+    });
+
+    document.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') hideEmojiPanel();
+    });
+
+    topicInput.addEventListener("input", () => {
+      updateTopicDisplay();
+      persistState();
+    });
+
+    nameInput.addEventListener("input", persistState);
+    modeSelect.addEventListener("change", persistState);
+
+    messageInput.addEventListener("input", () => {
+      charCount.textContent = `${messageInput.value.length} / ${MAX_LENGTH}`;
+      sendBtn.disabled = !messageInput.value.trim();
+    });
+
+    messageInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    window.addEventListener("beforeunload", () => disconnect(false));
+
+    function restoreState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          topicInput.value = saved.topic || DEFAULT_TOPIC;
+          nameInput.value = saved.name || DEFAULT_NAME;
+          modeSelect.value = saved.mode || "live";
+          return;
+        }
+      } catch {
+        // ignore corrupted storage
+      }
+
+      topicInput.value = DEFAULT_TOPIC;
+      nameInput.value = DEFAULT_NAME;
+      modeSelect.value = "live";
+    }
+
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        topic: topicInput.value,
+        name: nameInput.value,
+        mode: modeSelect.value
+      }));
+    }
+
+    function normalizeTopic(value) {
+      return value.trim().replace(/^\/+|\/+$/g, "");
+    }
+
+    function generateTopic() {
+      const rand = Math.random().toString(36).slice(2, 8);
+      return `arch-chat-${Date.now().toString(36)}-${rand}`;
+    }
+
+    function updateTopicDisplay() {
+      const topic = normalizeTopic(topicInput.value);
+      topicLabel.textContent = topic || "-";
+      topicUrl.textContent = topic ? `https://ntfy.sh/${topic}` : "-";
+    }
+
+    function updateControls() {
+      sendBtn.disabled = !messageInput.value.trim() || !connectedTopic;
+      disconnectBtn.disabled = !eventSource;
+    }
+
+    function flashStatus(message) {
+      statusPill.textContent = message;
+      sideStatus.textContent = message;
+      setTimeout(() => {
+        if (eventSource) {
+          setStatus("connected", `已連線到 ${connectedTopic}`);
+        }
+      }, 1200);
+    }
+
+    function setStatus(state, text) {
+      statusPill.dataset.state = state;
+      statusPill.textContent = text;
+      sideStatus.textContent = text;
+    }
+
+    function connect() {
+      const topic = normalizeTopic(topicInput.value);
+      if (!topic) {
+        setStatus("error", "請先輸入 Topic");
+        return;
+      }
+
+      disconnect(false);
+      connectedTopic = topic;
+      persistState();
+      updateTopicDisplay();
+      updateControls();
+
+      const url = `https://ntfy.sh/${encodeURIComponent(topic)}/sse?since=all`;
+      eventSource = new EventSource(url);
+
+      setStatus("idle", `正在連線到 ${topic}`);
+      appendNotice(`連線中：${url}`);
+
+      eventSource.onopen = () => {
+        setStatus("connected", `已連線到 ${topic}`);
+        updateControls();
+      };
+
+      eventSource.onerror = () => {
+        setStatus("error", "連線發生錯誤，正在重新嘗試連線");
+        updateControls();
+      };
+
+      eventSource.onmessage = (event) => {
+        handleEvent(event.data);
+      };
+    }
+
+    function disconnect(showNotice) {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      connectedTopic = "";
+      updateControls();
+      setStatus("idle", "尚未連線");
+      if (showNotice) {
+        appendNotice("已中斷連線。若要繼續聊天，請重新按「連線」。");
+      }
+    }
+
+    function handleEvent(raw) {
+      let payload;
+      try {
+        payload = JSON.parse(raw);
+      } catch {
+        return;
+      }
+
+      if (!payload || !payload.event) return;
+      if (payload.event === "keepalive" || payload.event === "open" || payload.event === "poll_request") {
+        return;
+      }
+
+      if (payload.id && seenIds.has(payload.id)) return;
+      if (payload.id) seenIds.add(payload.id);
+
+      if (payload.event === "message") {
+        renderMessage(payload);
+        messageTotal += 1;
+        updateMessageCount();
+        scrollToBottom();
+        return;
+      }
+
+      if (payload.event === "message_delete") {
+        appendNotice(`某則訊息已被刪除，sequence_id: ${payload.sequence_id || "-"}`);
+        return;
+      }
+
+      if (payload.event === "message_clear") {
+        appendNotice(`某則訊息已被清除，sequence_id: ${payload.sequence_id || "-"}`);
+      }
+    }
+
+    function updateMessageCount() {
+      messageCount.textContent = String(messageTotal);
+    }
+
+    function renderMessage(payload) {
+      const row = document.createElement("article");
+      const parsed = parseMessage(payload);
+      const currentName = (nameInput.value || DEFAULT_NAME).trim();
+      const isMe = parsed.sender.trim() === currentName && !!currentName;
+      row.className = `message ${isMe ? "me" : "other"}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = initials(parsed.sender || payload.topic || "?");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.innerHTML = `<span class="name">${escapeHtml(parsed.sender || payload.title || payload.topic || "未命名")}</span><span>${formatTime(payload.time)}</span>`;
+
+      const body = document.createElement("p");
+      body.className = "body";
+      body.innerHTML = linkify(escapeHtml(parsed.message));
+
+      bubble.append(meta, body);
+      row.append(avatar, bubble);
+      messagesEl.append(row);
+    }
+
+    function parseMessage(payload) {
+      const rawMessage = String(payload.message || "");
+      const fallbackSender = String(payload.title || payload.topic || "未命名");
+      const separatorMatch = rawMessage.match(/^([^：:]{1,40})[：:](.*)$/s);
+
+      if (separatorMatch) {
+        return {
+          sender: separatorMatch[1].trim() || fallbackSender,
+          message: separatorMatch[2].trimStart()
+        };
+      }
+
+      return {
+        sender: fallbackSender,
+        message: rawMessage
+      };
+    }
+
+    function appendNotice(text) {
+      const note = document.createElement("div");
+      note.className = "notice";
+      note.textContent = text;
+      messagesEl.append(note);
+      scrollToBottom();
+    }
+
+    async function sendMessage() {
+      const topic = connectedTopic || normalizeTopic(topicInput.value);
+      const text = messageInput.value.trim();
+      const sender = (nameInput.value || DEFAULT_NAME).trim() || DEFAULT_NAME;
+
+      if (!topic) {
+        setStatus("error", "請先輸入 Topic");
+        return;
+      }
+
+      if (!text) return;
+
+      sendBtn.disabled = true;
+      messageInput.disabled = true;
+      setStatus("idle", "送出中...");
+
+      try {
+        const headers = {
+          "Content-Type": "text/plain; charset=utf-8"
+        };
+
+        if (modeSelect.value === "private") {
+          headers["Cache"] = "no";
+        }
+
+        const response = await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+          method: "POST",
+          headers,
+          body: `${sender}：${text}`
+        });
+
+        if (!response.ok) {
+          throw new Error(`伺服器回應錯誤，狀態碼 ${response.status}`);
+        }
+
+        messageInput.value = "";
+        charCount.textContent = `0 / ${MAX_LENGTH}`;
+        sendBtn.disabled = true;
+        messageInput.focus();
+        setStatus("connected", `已連線到 ${topic}`);
+      } catch (error) {
+        setStatus("error", "訊息送出失敗，請再試一次");
+        appendNotice(`訊息送出失敗：${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        messageInput.disabled = false;
+        updateControls();
+      }
+    }
+
+    function insertText(text) {
+      const start = messageInput.selectionStart ?? messageInput.value.length;
+      const end = messageInput.selectionEnd ?? messageInput.value.length;
+      const current = messageInput.value;
+      messageInput.value = `${current.slice(0, start)}${text}${current.slice(end)}`;
+      const caret = start + text.length;
+      messageInput.setSelectionRange(caret, caret);
+      messageInput.dispatchEvent(new Event("input"));
+      messageInput.focus();
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      });
+    }
+
+    function initials(value) {
+      const trimmed = String(value || "").trim();
+      if (!trimmed) return "?";
+      return Array.from(trimmed).slice(0, 1).join("").toUpperCase();
+    }
+
+    function formatTime(unixSeconds) {
+      if (!unixSeconds) return new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+      return new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit" }).format(new Date(unixSeconds * 1000));
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function linkify(text) {
+      return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>');
+    }
+
+    topicInput.addEventListener("input", () => {
+      updateTopicDisplay();
+      updateControls();
+    });
+
+    messageInput.addEventListener("input", () => {
+      charCount.textContent = `${messageInput.value.length} / ${MAX_LENGTH}`;
+      sendBtn.disabled = !messageInput.value.trim() || !connectedTopic;
+    });
+
+    connectBtn.addEventListener("click", connect);
+    disconnectBtn.addEventListener("click", () => disconnect(true));
+    sendBtn.addEventListener("click", sendMessage);
+
+    const savedTopic = normalizeTopic(topicInput.value);
+    if (!savedTopic) {
+      topicInput.value = DEFAULT_TOPIC;
+      updateTopicDisplay();
+      persistState();
+    }
+  </script>
+</body>
+</html>
