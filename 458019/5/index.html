@@ -542,7 +542,7 @@
             addMessage(data.message, title, false);
           }
         } catch (e) {
-          console.error('解析訊息失敗:', e);
+          // 訊息解析失敗
         }
       };
 
@@ -578,7 +578,9 @@
           'Title': asciiName || 'A'
         },
         body: text
-      }).catch(err => console.error('發送失敗:', err));
+      }).catch(err => {
+        // 訊息發送失敗
+      });
 
       input.value = '';
       input.focus();
