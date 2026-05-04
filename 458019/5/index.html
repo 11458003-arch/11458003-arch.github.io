@@ -569,12 +569,13 @@
       // 顯示本地訊息
       addMessage(text, userName, true);
 
-      // 發送到 ntfy.sh
+      // 發送到 ntfy.sh - 將用戶名轉為 ASCII（取首字母）
+      const asciiName = userName.charAt(0);
       fetch(`${NTFY_API}/${currentTopic}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',
-          'Title': userName
+          'Title': asciiName || 'A'
         },
         body: text
       }).catch(err => console.error('發送失敗:', err));
