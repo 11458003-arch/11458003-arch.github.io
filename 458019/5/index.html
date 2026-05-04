@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dr.Her 即時聊天室 | 施丞彥作品</title>
+  <meta name="description" content="Dr.Her — 支援 ntfy.sh SSE 即時推播的聊天室。實時接收訊息、自訂頻道與用戶名。" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #1a0d2e 0%, #2d1b4e 100%);
+      color: #e7e7e7;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: rgba(20, 10, 35, 0.95);
+      border-right: 1px solid rgba(255, 100, 200, 0.2);
+      padding: 24px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .logo-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff4d7d, #ff1493);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .logo-text {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #999;
+      letter-spacing: 0.08em;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 13px;
+      color: #999;
+    }
+
+    input[type="text"], select {
+      background: rgba(40, 20, 60, 0.6);
+      border: 1px solid rgba(255, 100, 200, 0.2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #e7e7e7;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #ff4d7d;
+      background: rgba(40, 20, 60, 0.8);
+    }
+
+    .status-box {
+      background: rgba(30, 15, 50, 0.8);
+      border: 1px solid rgba(255, 100, 200, 0.15);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #999;
+    }
+
+    .status-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .status-value {
+      color: #ff4d7d;
+      font-weight: 600;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #ff4d7d, #ff1493);
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 77, 125, 0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(135deg, #0f0820 0%, #1a0d2e 100%);
+    }
+
+    .chat-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid rgba(255, 100, 200, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #4ade80;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.sent {
+      justify-content: flex-end;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff4d7d, #ff1493);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .message.sent .avatar {
+      background: linear-gradient(135deg, #4ade80, #22c55e);
+      order: 2;
+    }
+
+    .message-bubble {
+      max-width: 60%;
+      background: rgba(40, 20, 60, 0.7);
+      border: 1px solid rgba(255, 100, 200, 0.2);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.sent .message-bubble {
+      background: rgba(74, 222, 128, 0.15);
+      border-color: rgba(74, 222, 128, 0.3);
+      order: 1;
+    }
+
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #999;
+      padding: 0 12px;
+    }
+
+    .message-sender {
+      font-weight: 600;
+      color: #ff4d7d;
+    }
+
+    .message.sent .message-sender {
+      color: #4ade80;
+    }
+
+    .message-time {
+      color: #666;
+    }
+
+    .input-area {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255, 100, 200, 0.1);
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: rgba(40, 20, 60, 0.5);
+      border: 1px solid rgba(255, 100, 200, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .input-wrapper input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: #e7e7e7;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .input-wrapper input::placeholder {
+      color: #666;
+    }
+
+    .send-btn {
+      background: linear-gradient(135deg, #ff4d7d, #ff1493);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 77, 125, 0.3);
+    }
+
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      color: #666;
+      text-align: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 100, 200, 0.2);
+        padding: 16px;
+      }
+
+      .message-bubble {
+        max-width: 80%;
+      }
+
+      .messages-container {
+        padding: 12px 16px;
+      }
+
+      .input-area {
+        padding: 12px 16px;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 100, 200, 0.2);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 100, 200, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-circle">N</div>
+      <div>
+        <div class="logo-text">ntfy 聊天室</div>
+        <div style="font-size: 11px; color: #666;">HTML × 推播</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Topic</div>
+      <div class="input-group">
+        <input type="text" id="topicInput" placeholder="输入频道" value="drher" />
+        <button class="btn" onclick="connectToTopic()" style="width: 100%;">連線</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">你的名字</div>
+      <div class="input-group">
+        <input type="text" id="userNameInput" placeholder="輸入用戶名" value="施丞彥" />
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">連線狀態</div>
+      <div class="status-box">
+        <div class="status-item">
+          <span>已連線到</span>
+          <span id="connectedTopic" class="status-value">—</span>
+        </div>
+        <div class="status-item">
+          <span>訊息數</span>
+          <span id="messageCount" class="status-value">0</span>
+        </div>
+        <div class="status-item">
+          <span>目前 Topic</span>
+          <span id="currentTopic" class="status-value">drher</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="clearMessages()" style="width: 100%; margin-top: auto;">清空對話</button>
+  </aside>
+
+  <main class="main-content">
+    <header class="chat-header">
+      <h1 class="chat-title">聯天對話窗</h1>
+      <div class="connection-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">連線中...</span>
+      </div>
+    </header>
+
+    <div class="messages-container" id="messagesContainer">
+      <div class="empty-state">
+        <span>📢 選擇頻道後開始聊天</span>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <input type="text" id="messageInput" placeholder="輸入訊息・Enter 送出‧Shift+Enter 換行" />
+      </div>
+      <button class="send-btn" onclick="sendMessage()" title="發送">✈️</button>
+    </div>
+  </main>
+
+  <script>
+    let eventSource = null;
+    let messageCount = 0;
+    let currentTopic = 'drher';
+
+    const NTFY_API = 'https://ntfy.sh';
+
+    function getTimestamp() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      return `${hours}:${mins}`;
+    }
+
+    function addMessage(text, sender, isOwn = false) {
+      const container = document.getElementById('messagesContainer');
+      
+      if (container.querySelector('.empty-state')) {
+        container.innerHTML = '';
+      }
+
+      const msg = document.createElement('div');
+      msg.className = `message ${isOwn ? 'sent' : ''}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.textContent = sender.charAt(0);
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+      bubble.textContent = text;
+      
+      const meta = document.createElement('div');
+      meta.className = 'message-meta';
+      
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'message-sender';
+      senderSpan.textContent = sender;
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'message-time';
+      timeSpan.textContent = getTimestamp();
+      
+      meta.appendChild(senderSpan);
+      meta.appendChild(timeSpan);
+      
+      msg.appendChild(avatar);
+      msg.appendChild(bubble);
+      
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = isOwn ? 'row-reverse' : 'row';
+      wrapper.style.gap = '12px';
+      wrapper.style.alignItems = 'flex-end';
+      
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(bubble);
+      
+      container.appendChild(meta);
+      container.appendChild(wrapper);
+      
+      messageCount++;
+      document.getElementById('messageCount').textContent = messageCount;
+      
+      // 自動滾動到最新訊息
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function connectToTopic() {
+      const topic = document.getElementById('topicInput').value.trim();
+      
+      if (!topic) {
+        alert('請輸入頻道名稱');
+        return;
+      }
+
+      if (eventSource) {
+        eventSource.close();
+      }
+
+      currentTopic = topic;
+      document.getElementById('currentTopic').textContent = topic;
+      document.getElementById('connectedTopic').textContent = topic;
+      document.getElementById('statusText').textContent = '已連線 ✓';
+      document.getElementById('statusDot').classList.add('connected');
+
+      // 使用 SSE 連接 ntfy.sh
+      eventSource = new EventSource(`${NTFY_API}/${topic}/sse`);
+
+      eventSource.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.message) {
+            const title = data.title || data.message;
+            addMessage(data.message, title, false);
+          }
+        } catch (e) {
+          console.error('解析訊息失敗:', e);
+        }
+      };
+
+      eventSource.onerror = function() {
+        document.getElementById('statusText').textContent = '連線失敗';
+        document.getElementById('statusDot').classList.remove('connected');
+      };
+
+      addMessage(`已連接到頻道 "${topic}"`, 'System', false);
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+      const userName = document.getElementById('userNameInput').value.trim() || 'Anonymous';
+
+      if (!text) return;
+
+      if (!currentTopic) {
+        alert('請先連線到頻道');
+        return;
+      }
+
+      // 顯示本地訊息
+      addMessage(text, userName, true);
+
+      // 發送到 ntfy.sh
+      fetch(`${NTFY_API}/${currentTopic}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Title': userName
+        },
+        body: text
+      }).catch(err => console.error('發送失敗:', err));
+
+      input.value = '';
+      input.focus();
+    }
+
+    function clearMessages() {
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = '<div class="empty-state"><span>📢 選擇頻道後開始聊天</span></div>';
+      messageCount = 0;
+      document.getElementById('messageCount').textContent = '0';
+    }
+
+    // 回車發送
+    document.getElementById('messageInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // 頁面加載時自動連線
+    window.addEventListener('load', function() {
+      connectToTopic();
+    });
+
+    // 關閉時清理
+    window.addEventListener('beforeunload', function() {
+      if (eventSource) {
+        eventSource.close();
+      }
+    });
+  </script>
+</body>
+</html>
