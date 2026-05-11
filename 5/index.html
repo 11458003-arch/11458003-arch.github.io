@@ -99,6 +99,55 @@
       gap: 12px;
     }
 
+    .toggle-sidebar-btn {
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255, 79, 123, 0.16);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+      flex: 0 0 auto;
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 999;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .toggle-sidebar-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 79, 123, 0.45);
+    }
+
+    .shell:not(.sidebar-collapsed) .toggle-sidebar-btn {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .sidebar {
+      transition: all 0.3s ease;
+    }
+
+    .shell.sidebar-collapsed {
+      grid-template-columns: 0 minmax(0, 1fr);
+      gap: 0;
+    }
+
+    .sidebar.collapsed {
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -396,6 +445,7 @@
       gap: 14px;
       align-content: start;
       scroll-behavior: smooth;
+      height: 700px;
     }
 
     .messages::-webkit-scrollbar,
@@ -659,6 +709,10 @@
       .main {
         order: -1;
       }
+
+      .messages {
+        height: 650px;
+      }
     }
 
     @media (max-width: 680px) {
@@ -679,6 +733,10 @@
       .composer {
         padding-left: 12px;
         padding-right: 12px;
+      }
+
+      .messages {
+        height: 550px;
       }
 
       .sidebar {
@@ -772,6 +830,7 @@
 </head>
 <body>
   <main class="shell">
+    <button class="toggle-sidebar-btn" id="toggleSidebarBtn" type="button" title="折叠/展开">−</button>
     <aside class="card sidebar">
       <div class="brand-row">
         <div class="brand">
@@ -824,6 +883,10 @@
           <div class="metric">
             <span>訊息數</span>
             <strong id="messageCount">0</strong>
+          </div>
+          <div class="metric">
+            <span>上線人數</span>
+            <strong id="onlineCount">0</strong>
           </div>
           <div class="metric">
             <span>目前 Topic</span>
@@ -939,14 +1002,43 @@
     const charCount = document.getElementById("charCount");
     const statusPill = document.getElementById("statusPill");
     const sideStatus = document.getElementById("sideStatus");
+    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+    const sidebar = document.querySelector(".sidebar");
+    const shell = document.querySelector(".shell");
     const messageCount = document.getElementById("messageCount");
     const topicLabel = document.getElementById("topicLabel");
     const topicUrl = document.getElementById("topicUrl");
+    const onlineCountEl = document.getElementById("onlineCount");
+
+    // 侧边栏折叠状态
+    let sidebarCollapsed = localStorage.getItem("sidebar_collapsed") === "true";
+    if (sidebarCollapsed) {
+      sidebar.classList.add("collapsed");
+      shell.classList.add("sidebar-collapsed");
+      toggleSidebarBtn.textContent = "+";
+    }
+
+    toggleSidebarBtn.addEventListener("click", () => {
+      sidebarCollapsed = !sidebarCollapsed;
+      localStorage.setItem("sidebar_collapsed", sidebarCollapsed);
+      
+      if (sidebarCollapsed) {
+        sidebar.classList.add("collapsed");
+        shell.classList.add("sidebar-collapsed");
+        toggleSidebarBtn.textContent = "+";
+      } else {
+        sidebar.classList.remove("collapsed");
+        shell.classList.remove("sidebar-collapsed");
+        toggleSidebarBtn.textContent = "−";
+      }
+    });
 
     let eventSource = null;
     let connectedTopic = "";
     let messageTotal = 0;
     const seenIds = new Set();
+    const activeUsers = new Map(); // 追蹤活躍用戶：{username: lastActivityTime}
+    const USER_TIMEOUT = 5 * 60 * 1000; // 5 分鐘未活躍則視為離線
 
     restoreState();
     updateTopicDisplay();
@@ -1158,6 +1250,8 @@
 
       disconnect(false);
       connectedTopic = topic;
+      activeUsers.clear(); // 清除舊Topic的用戶
+      updateOnlineCount();
       persistState();
       updateTopicDisplay();
       updateControls();
@@ -1234,11 +1328,31 @@
       messageCount.textContent = String(messageTotal);
     }
 
+    function updateOnlineCount() {
+      // 清除超時的用戶
+      const now = Date.now();
+      for (const [username, lastSeen] of activeUsers.entries()) {
+        if (now - lastSeen > USER_TIMEOUT) {
+          activeUsers.delete(username);
+        }
+      }
+      // 更新顯示
+      onlineCountEl.textContent = String(activeUsers.size);
+    }
+
     function renderMessage(payload) {
       const row = document.createElement("article");
       const parsed = parseMessage(payload);
       const currentName = (nameInput.value || DEFAULT_NAME).trim();
       const isMe = parsed.sender.trim() === currentName && !!currentName;
+      
+      // 追蹤活躍用戶
+      const senderName = parsed.sender?.trim() || payload.title?.trim() || "未命名";
+      if (senderName && senderName !== "未命名") {
+        activeUsers.set(senderName, Date.now());
+        updateOnlineCount();
+      }
+      
       row.className = `message ${isMe ? "me" : "other"}`;
 
       const avatar = document.createElement("div");
@@ -1321,6 +1435,10 @@
         if (!response.ok) {
           throw new Error(`伺服器回應錯誤，狀態碼 ${response.status}`);
         }
+
+        // 更新發送者的在線狀態
+        activeUsers.set(sender, Date.now());
+        updateOnlineCount();
 
         messageInput.value = "";
         charCount.textContent = `0 / ${MAX_LENGTH}`;
