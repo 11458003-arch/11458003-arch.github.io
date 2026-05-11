@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ntfy 聊天介面（drher）</title>
+  <style>
+    :root{font-family:Arial, "Noto Sans TC", sans-serif}
+    body{margin:0;display:flex;flex-direction:column;height:100vh}
+    header{padding:12px 16px;background:#0b5cff;color:#fff;display:flex;align-items:center;gap:12px}
+    header input, header button{padding:8px;border-radius:6px;border:1px solid #ccc}
+    #status{margin-left:auto;font-weight:700}
+    main{flex:1;padding:16px;overflow:auto;background:#f3f4f6}
+    .chat{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+    .bubble{display:inline-block;padding:10px 14px;border-radius:16px;max-width:70%;word-break:break-word}
+    .left{align-self:flex-start;background:#fff;border:1px solid #e5e7eb}
+    .right{align-self:flex-end;background:#0b5cff;color:#fff}
+    footer{display:flex;gap:8px;padding:12px;align-items:center;border-top:1px solid #e5e7eb}
+    #msg{flex:1;padding:10px;border-radius:8px;border:1px solid #ccc}
+    #send{padding:10px 14px;border-radius:8px;border:0;background:#0b5cff;color:#fff;cursor:pointer}
+    .meta{font-size:12px;color:#6b7280;margin-bottom:4px}
+  </style>
+</head>
+<body>
+  <header>
+    <label>頻道 (Topic): <input id="topic" value="drher"></label>
+    <button id="connect">連線 / 訂閱</button>
+    <button id="debugBtn" title="顯示除錯指引">除錯</button>
+    <div id="status">未連線</div>
+  </header>
+
+  <main>
+    <div class="chat" id="chat"></div>
+  </main>
+
+  <footer>
+    <div style="flex:1">
+      <div class="meta">使用者: <strong>小宥宥</strong> — 按 Enter 送出</div>
+      <textarea id="msg" rows="2" placeholder="輸入訊息後按 Enter 送出"></textarea>
+    </div>
+    <button id="send">送出</button>
+  </footer>
+
+  <script>
+    // 設定
+    const username = '小宥宥';
+    const connectBtn = document.getElementById('connect');
+    const statusEl = document.getElementById('status');
+    const topicInput = document.getElementById('topic');
+    const chat = document.getElementById('chat');
+    const msgInput = document.getElementById('msg');
+    const sendBtn = document.getElementById('send');
+
+    let es = null;
+    let connectedTopic = null;
+
+    function addMessage(text, side='left'){
+      const el = document.createElement('div');
+      el.className = 'bubble ' + (side==='right' ? 'right' : 'left');
+      el.textContent = text;
+      chat.appendChild(el);
+      // scroll to bottom
+      chat.parentElement.scrollTop = chat.parentElement.scrollHeight;
+    }
+
+    async function sendMessage(){
+      const topic = (topicInput.value || 'drher').trim();
+      const text = msgInput.value.trim();
+      if(!text) return;
+      const payload = `[${username}] ${text}`;
+      try{
+        await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+          method: 'POST',
+          body: payload,
+          headers: {'Title': 'XiaoYouyou'}
+        });
+        addMessage(text, 'right');
+        msgInput.value = '';
+        msgInput.focus();
+        statusEl.textContent = '最後動作：已送出';
+      }catch(err){
+        console.error('送出錯誤', err);
+        statusEl.textContent = '送出失敗（檢查 Console 與 Network 是否有 CORS）';
+        try{
+          await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
+            method: 'POST',
+            body: payload,
+            mode: 'no-cors'
+          });
+          addMessage(text + ' (已嘗試 no-cors 傳送，無法驗證結果)', 'right');
+          msgInput.value = '';
+          msgInput.focus();
+          statusEl.textContent = '已嘗試 no-cors 傳送（無法驗證）';
+        }catch(err2){
+          console.error('no-cors 備援也失敗', err2);
+          alert('訊息送出失敗，請檢查網路或 CORS 限制。詳情請開啟 DevTools Console。');
+        }
+      }
+    }
+
+    function subscribe(topic){
+      if(es){
+        es.close();
+        es = null;
+      }
+      const url = `https://ntfy.sh/subscribe/${encodeURIComponent(topic)}`;
+      try{
+        es = new EventSource(url);
+      }catch(e){
+        alert('瀏覽器不支援 EventSource 或連線失敗');
+        return;
+      }
+
+      es.onopen = ()=>{
+        statusEl.textContent = '已連線';
+        connectBtn.disabled = true;
+        connectedTopic = topic;
+      };
+
+      es.onerror = (ev)=>{
+        console.warn('EventSource error', ev);
+        statusEl.textContent = '連線中斷';
+        connectBtn.disabled = false;
+      };
+
+      es.onmessage = (e)=>{
+        try{
+          const data = e.data;
+          addMessage(data, 'left');
+        }catch(err){
+          console.error('解析訊息錯誤', err);
+        }
+      };
+    }
+
+    connectBtn.addEventListener('click', ()=>{
+      const topic = (topicInput.value || 'drher').trim();
+      statusEl.textContent = '連線中...';
+      subscribe(topic);
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    msgInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    const debugBtn = document.getElementById('debugBtn');
+    debugBtn.addEventListener('click', ()=>{
+      const msg = `除錯步驟：\n\n1) 開啟瀏覽器 DevTools -> Console 與 Network，重現送出，檢查 POST 是否被瀏覽器阻擋（CORS 錯誤）\n\n2) 使用 curl 測試伺服器端是否可達（在本機終端執行）：\n   curl -v -X POST -H "Title: XiaoYouyou" --data "測試" https://ntfy.sh/${topicInput.value || 'drher'}\n\n3) 若為 CORS 限制：在您控制的 server 上設定一個 proxy（簡單 Node/Express 或 serverless），或把頁面透過後端發送。\n\n需要我幫你建立一個簡單的 proxy 範例 (Node/Express) 嗎？`;
+      alert(msg);
+    });
+  </script>
+</body>
+</html>
