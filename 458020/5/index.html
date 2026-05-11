@@ -72,7 +72,7 @@
         await fetch(`https://ntfy.sh/${encodeURIComponent(topic)}`, {
           method: 'POST',
           body: payload,
-          headers: {'Title': 'XiaoYouyou'}
+          headers: {'Title': '小宥宥'}
         });
         addMessage(text, 'right');
         msgInput.value = '';
@@ -103,30 +103,43 @@
         es.close();
         es = null;
       }
-      const url = `https://ntfy.sh/subscribe/${encodeURIComponent(topic)}`;
+      // ntfy.sh SSE 端點支持多種格式，優先使用 /sse
+      const url = `https://ntfy.sh/${encodeURIComponent(topic)}/sse`;
+      console.log('嘗試連接 SSE:', url);
       try{
         es = new EventSource(url);
       }catch(e){
+        console.error('EventSource 初始化失敗', e);
         alert('瀏覽器不支援 EventSource 或連線失敗');
         return;
       }
 
       es.onopen = ()=>{
+        console.log('已連線到頻道:', connectedTopic);
         statusEl.textContent = '已連線';
         connectBtn.disabled = true;
         connectedTopic = topic;
+        addMessage(`✓ 已連線到頻道「${topic}」`, 'left');
       };
 
       es.onerror = (ev)=>{
         console.warn('EventSource error', ev);
         statusEl.textContent = '連線中斷';
         connectBtn.disabled = false;
+        addMessage('× 連線已中斷', 'left');
       };
 
       es.onmessage = (e)=>{
         try{
           const data = e.data;
-          addMessage(data, 'left');
+          console.log('接收到訊息:', data);
+          // ntfy 可能回傳 JSON，先嘗試解析
+          let msg = data;
+          try{
+            const json = JSON.parse(data);
+            msg = json.message || data;
+          }catch(e){}
+          addMessage(msg, 'left');
         }catch(err){
           console.error('解析訊息錯誤', err);
         }
@@ -150,7 +163,7 @@
 
     const debugBtn = document.getElementById('debugBtn');
     debugBtn.addEventListener('click', ()=>{
-      const msg = `除錯步驟：\n\n1) 開啟瀏覽器 DevTools -> Console 與 Network，重現送出，檢查 POST 是否被瀏覽器阻擋（CORS 錯誤）\n\n2) 使用 curl 測試伺服器端是否可達（在本機終端執行）：\n   curl -v -X POST -H "Title: XiaoYouyou" --data "測試" https://ntfy.sh/${topicInput.value || 'drher'}\n\n3) 若為 CORS 限制：在您控制的 server 上設定一個 proxy（簡單 Node/Express 或 serverless），或把頁面透過後端發送。\n\n需要我幫你建立一個簡單的 proxy 範例 (Node/Express) 嗎？`;
+      const msg = `除錯步驟：\n\n1) 開啟瀏覽器 DevTools -> Console 與 Network，重現送出，檢查 POST 是否被瀏覽器阻擋（CORS 錯誤）\n\n2) 使用 curl 測試伺服器端是否可達（在本機終端執行）：\n   curl -v -X POST -H "Title: 小宥宥" --data "測試" https://ntfy.sh/${topicInput.value || 'drher'}\n\n3) 若為 CORS 限制：在您控制的 server 上設定一個 proxy（簡單 Node/Express 或 serverless），或把頁面透過後端發送。\n\n需要我幫你建立一個簡單的 proxy 範例 (Node/Express) 嗎？`;
       alert(msg);
     });
   </script>
