@@ -119,97 +119,51 @@
     }
 
     .daruma {
-      position: relative;
-      width: 146px;
-      height: 166px;
-      border-radius: 999px 999px 38px 38px;
-      background: radial-gradient(circle at 30% 24%, #f18655 0, #c9552d 50%, #aa421f 100%);
-      border: 2px solid rgba(89, 30, 12, 0.36);
-      box-shadow: 0 10px 24px rgba(43, 22, 13, 0.22);
+      width: 160px;
+      height: 180px;
+      background-image: url('assets/daruma.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
       transform-origin: center bottom;
       animation: wobble 2.8s ease-in-out infinite;
     }
 
     .daruma::before,
     .daruma::after {
-      content: "";
-      position: absolute;
-      top: 54px;
-      width: 42px;
-      height: 26px;
-      border-radius: 50%;
-      background: #fff7ec;
-      border: 1px solid rgba(83, 50, 31, 0.25);
-      box-shadow: inset 0 -2px 0 rgba(95, 57, 38, 0.14);
-    }
-
-    .daruma::before {
-      left: 24px;
-    }
-
-    .daruma::after {
-      right: 24px;
+      display: none;
     }
 
     .daruma-eye {
-      position: absolute;
-      top: 62px;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #30231d;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+      display: none;
     }
 
     .daruma-eye.left {
-      left: 41px;
+      display: none;
     }
 
     .daruma-eye.right {
-      right: 41px;
+      display: none;
     }
 
     .daruma-brow {
-      position: absolute;
-      top: 49px;
-      width: 26px;
-      height: 12px;
-      border-top: 3px solid #5f2d1f;
-      border-radius: 999px;
+      display: none;
     }
 
     .daruma-brow.left {
-      left: 33px;
-      transform: rotate(-8deg);
+      display: none;
     }
 
     .daruma-brow.right {
-      right: 33px;
-      transform: rotate(8deg);
+      display: none;
     }
 
     .daruma-mouth {
-      position: absolute;
-      left: 50%;
-      top: 93px;
-      transform: translateX(-50%);
-      width: 34px;
-      height: 16px;
-      border-bottom: 3px solid #f9ead6;
-      border-radius: 0 0 999px 999px;
+      display: none;
     }
 
     .daruma-base {
-      position: absolute;
-      left: 50%;
-      bottom: 10px;
-      transform: translateX(-50%);
-      width: 98px;
-      height: 34px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #f8f0e2, #e5cfad);
-      border: 1px solid rgba(96, 70, 40, 0.22);
-      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5);
+      display: none;
     }
 
     .section-title {
@@ -465,7 +419,7 @@
         <a class="btn alt" href="4/index.html">前往使用</a>
       </article>
 
-      <article class="card hidden">
+      <article class="card">
         <h3>4.5. 示範資料夾</h3>
         <a class="thumb" href="4.5/index.html" aria-label="專案 4.5 縮圖，點擊前往查看">
           <span class="thumb-label">現場預覽</span>
@@ -486,7 +440,26 @@
       </article>
 
       <article class="card">
-        <h3>100. 20260319日本行</h3>
+        <h3>98. Python 俄羅斯方塊</h3>
+        <a class="thumb" href="98/index.html" aria-label="Python 俄羅斯方塊縮圖，點擊前往遊玩">
+          <span class="thumb-label">現場預覽</span>
+          <iframe src="98/index.html" title="Python 俄羅斯方塊預覽" loading="lazy"></iframe>
+        </a>
+        <p>經典俄羅斯方塊遊戲，用 Python 製作，支援鍵盤操作與流暢的遊戲體驗。</p>
+        <a class="btn alt" href="98/index.html">前往遊玩</a>
+      </article>
+
+      <article class="card">
+        <h3>99. 工程計算機</h3>
+        <a class="thumb" href="99/index.html" aria-label="工程計算機縮圖，點擊前往使用">
+          <span class="thumb-label">現場預覽</span>
+          <iframe src="99/index.html" title="工程計算機預覽" loading="lazy"></iframe>
+        </a>
+        <p>支援三角函數、對數、平方根與角度切換，深色主題設計，手機與桌面都能操作。</p>
+        <a class="btn" href="99/index.html">前往使用</a>
+      </article>
+
+      <article class="card">
         <a class="thumb" href="100/index.html" aria-label="20260319日本行縮圖，點擊前往查看">
           <span class="thumb-label">影片預覽</span>
           <video autoplay muted loop playsinline preload="metadata" aria-hidden="true">
