@@ -1,3 +1,48 @@
+# apply_changes.ps1
+# 在本機套用變更：建立 458019/6/index.html 並覆寫 458019/index.html
+# 使用方法：在專案根目錄執行 `.uild\apply_changes.ps1` 或 `.ind`（請在 PowerShell 以專案資料夾為當前目錄執行）
+
+$scriptPath = $MyInvocation.MyCommand.Definition
+if (-not $scriptPath) {
+  $root = (Get-Location).Path
+} else {
+  $root = Split-Path -Parent $scriptPath
+}
+$timestamp = (Get-Date).ToString('yyyyMMdd-HHmmss')
+$backupDir = Join-Path $root "backup-$timestamp"
+Write-Host "備份目錄：$backupDir"
+New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+
+function Write-FileWithBackup($relPath, $content) {
+    $target = Join-Path $root $relPath
+    $dir = Split-Path -Parent $target
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    if (Test-Path $target) {
+        $bak = Join-Path $backupDir (($relPath -replace '[\\/]','_') + '.bak')
+        Copy-Item -Path $target -Destination $bak -Force
+        Write-Host "已備份： $relPath -> $bak"
+    }
+    $content | Out-File -FilePath $target -Encoding utf8 -Force
+    Write-Host "已寫入： $relPath"
+}
+
+$files = @{
+    '458019/6/index.html' = @'
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>458019 — 6</title>
+  </head>
+  <body>
+    <h1>458019 / 6</h1>
+    <p>這是第 6 個資料夾的預設頁面。</p>
+  </body>
+</html>
+'@
+
+    '458019/index.html' = @'
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -341,12 +386,12 @@
 
       <article class="card">
         <h3>6. 雲端記事本</h3>
-        <a class="thumb" href="https://script.google.com/macros/library/d/1UFdBQiChPMsPpaZsbFUQrrVDg1uPP6PIr5ivGwKYJ8MAg2GWRECq6EJl/2" aria-label="雲端記事本縮圖，點擊前往使用" target="_blank" rel="noopener">
+        <a class="thumb" href="6/index.html" aria-label="雲端記事本縮圖，點擊前往使用">
           <span class="thumb-label">現場預覽</span>
-          <iframe src="https://script.google.com/macros/library/d/1UFdBQiChPMsPpaZsbFUQrrVDg1uPP6PIr5ivGwKYJ8MAg2GWRECq6EJl/2" title="雲端記事本預覽" loading="lazy"></iframe>
+          <iframe src="6/index.html" title="雲端記事本預覽" loading="lazy"></iframe>
         </a>
         <p>以 Google Apps Script 實作的雲端記事本，直接讀寫指定雲端資料夾內的檔案。</p>
-        <a class="btn" href="https://script.google.com/macros/library/d/1UFdBQiChPMsPpaZsbFUQrrVDg1uPP6PIr5ivGwKYJ8MAg2GWRECq6EJl/2" target="_blank" rel="noopener">前往使用</a>
+        <a class="btn" href="6/index.html">前往使用</a>
       </article>
     </section>
 
@@ -355,3 +400,11 @@
   </main>
 </body>
 </html>
+'@
+}
+
+foreach ($rel in $files.Keys) {
+    Write-FileWithBackup($rel, $files[$rel])
+}
+
+Write-Host "全部完成。請檢查並在必要時手動 commit 這些變更。"
