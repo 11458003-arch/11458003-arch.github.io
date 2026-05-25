@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>雲端記事本</title>
+  <style>
+  :root{--bg:#0f0f10;--panel:#1b1b1e;--panel-2:#232327;--text:#f4f4f5;--muted:#a1a1aa;--accent:#6b7df0;--accent-2:#8b5cf6;--success:#22c55e;--warn:#f59e0b;--border:#3d3d47;}
+  html,body{height:100%;margin:0;background:radial-gradient(circle at top left,#5f61d4 0,#6b4bc2 26%,#16161a 26%,#0f0f10 100%);color:var(--text);font-family:Arial,"Microsoft JhengHei",sans-serif;}
+  .app{min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 20px;background:linear-gradient(90deg,rgba(94,102,220,.95),rgba(124,82,191,.95));box-shadow:0 10px 40px rgba(0,0,0,.25);}
+  .title{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:800;letter-spacing:.5px;}
+  .cloud{width:34px;height:34px;flex:0 0 auto;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
+  .status-pill{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:rgba(60,48,101,.55);font-weight:700;font-size:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+  .dot{width:13px;height:13px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(245,158,11,.18);}
+  .content{flex:1;display:flex;flex-direction:column;padding:26px 22px 0;background:#111114;}
+  .file-label{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:#d8d8de;margin:0 0 14px 2px;}
+  .file-label span{font-size:18px;opacity:.95;}
+  .editor-shell{flex:1;display:flex;flex-direction:column;background:#151518;border-radius:18px 18px 0 0;padding:0;border:1px solid rgba(255,255,255,.06);box-shadow:0 18px 40px rgba(0,0,0,.28);overflow:hidden;}
+  #editor{flex:1;width:100%;min-height:420px;resize:none;border:3px solid #6278f1;border-radius:18px;background:#3a3a3f;color:#ececf0;font-size:18px;line-height:1.7;padding:26px 28px;box-sizing:border-box;outline:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);margin:10px;}
+  #editor:focus{border-color:#7d8cf7;box-shadow:0 0 0 4px rgba(98,120,241,.18),inset 0 0 0 1px rgba(255,255,255,.05);}
+  .bottom-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 26px 22px;background:#202022;border-top:1px solid rgba(255,255,255,.06);border-radius:0 0 18px 18px;}
+  #status{color:#c7c7cf;font-size:18px;min-height:28px;}
+  .save-btn{display:inline-flex;align-items:center;gap:10px;border:0;border-radius:14px;padding:16px 28px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:22px;font-weight:800;cursor:pointer;box-shadow:0 10px 24px rgba(107,125,240,.28);transition:transform .15s ease,filter .15s ease;}
+  .save-btn:hover{transform:translateY(-1px);filter:brightness(1.05);}
+  .save-btn:active{transform:translateY(0);}
+  .save-icon{width:22px;height:22px;display:inline-block;}
+  @media (max-width: 720px){.topbar{padding:18px 16px}.title{font-size:24px}.status-pill{font-size:14px;padding:8px 12px}.content{padding:16px 12px 0}#editor{margin:8px;font-size:16px;padding:18px 16px}.bottom-bar{padding:14px 16px 16px;flex-direction:column;align-items:stretch}.save-btn{justify-content:center;width:100%;font-size:18px}.file-label{font-size:16px}#status{font-size:15px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">
+        <svg class="cloud" viewBox="0 0 64 64" aria-hidden="true"><path fill="#fff" d="M19 49h26c8 0 14-6 14-14 0-7-5-13-12-14-2-9-10-15-19-15-8 0-15 5-18 13C4 20 0 25 0 31c0 10 8 18 19 18z"/></svg>
+        <span>雲端記事本</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button id="dialogBtn" style="background:transparent;border:1px solid rgba(255,255,255,.08);color:inherit;padding:8px 12px;border-radius:8px;cursor:pointer">說明</button>
+        <div class="status-pill"><span class="dot"></span><span id="saveState">未保存</span></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="file-label">📄 <span>記事本.txt</span></div>
+      <div class="editor-shell">
+        <textarea id="editor" aria-label="記事本編輯區" placeholder="開始輸入您的筆記..."></textarea>
+      </div>
+      <div class="bottom-bar">
+        <div id="status">最後修改時間：<?!= note.updated || '尚未建立' ?></div>
+        <button class="save-btn" id="saveBtn" type="button"><span class="save-icon">💾</span><span>Save</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- modal dialog markup -->
+  <div id="modalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);align-items:center;justify-content:center;z-index:9999">
+    <div style="background:#0f1113;color:#fff;padding:20px;border-radius:12px;max-width:720px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <strong style="font-size:20px">提示</strong>
+        <button id="modalClose" style="background:transparent;border:0;color:#bbb;font-size:18px;cursor:pointer">✕</button>
+      </div>
+      <div id="modalMessage" style="white-space:pre-wrap;line-height:1.6;color:#ddd;font-size:16px">...</div>
+    </div>
+  </div>
+
+  <script>
+    var initialContent = <?!= JSON.stringify(note.content || '') ?>;
+    var initialUpdated = <?!= JSON.stringify(note.updated || '') ?>;
+    var editor = document.getElementById('editor');
+    var statusEl = document.getElementById('status');
+    var saveStateEl = document.getElementById('saveState');
+    var saveBtn = document.getElementById('saveBtn');
+    editor.value = initialContent;
+    function setSaveState(text, color){ saveStateEl.textContent = text; saveStateEl.parentElement.querySelector('.dot').style.background = color; }
+    function setStatus(text){ statusEl.textContent = text; }
+    function markDirty(){ setSaveState('未保存', '#f59e0b'); }
+    function markSaved(updatedText){ setSaveState('已保存', '#22c55e'); setStatus('最後修改時間：' + updatedText); }
+    function saveNote(){
+      var content = editor.value;
+      setSaveState('儲存中...', '#f59e0b');
+      saveBtn.disabled = true;
+      google.script.run.withSuccessHandler(function(res){
+        saveBtn.disabled = false;
+        markSaved(res.updated || '');
+      }).withFailureHandler(function(err){
+        saveBtn.disabled = false;
+        setSaveState('儲存失敗', '#ef4444');
+        setStatus('儲存失敗：' + err.message);
+      }).saveNote(content);
+    }
+    editor.addEventListener('input', markDirty);
+    saveBtn.addEventListener('click', saveNote);
+
+    // dialog button: 呼叫 server-side helloWorld() 並顯示 modal
+    var dialogBtn = document.getElementById('dialogBtn');
+    var modal = document.getElementById('modalOverlay');
+    var modalMsg = document.getElementById('modalMessage');
+    var modalClose = document.getElementById('modalClose');
+    function showModal(text){ modalMsg.textContent = text; modal.style.display = 'flex'; }
+    function hideModal(){ modal.style.display = 'none'; }
+    dialogBtn.addEventListener('click', function(){ google.script.run.withSuccessHandler(showModal).withFailureHandler(function(e){ showModal('錯誤：'+e.message); }).helloWorld(); });
+    modalClose.addEventListener('click', hideModal);
+    modal.addEventListener('click', function(e){ if(e.target===modal) hideModal(); });
+    window.addEventListener('keydown', function(e){ if(e.key==='Escape') hideModal(); });
+    window.addEventListener('keydown', function(e){ if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'){ e.preventDefault(); saveNote(); } });
+    if (initialUpdated) { markSaved(initialUpdated); } else { setStatus('最後修改時間：尚未建立'); }
+  </script>
+</body>
+</html>
