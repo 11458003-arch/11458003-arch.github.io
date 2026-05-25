@@ -44,7 +44,7 @@
     <div class="content">
       <div class="file-label">📄 <span>記事本.txt</span></div>
       <div class="editor-shell">
-        <textarea id="editor" aria-label="記事本編輯區" placeholder="開始輸入您的筆記..."></textarea>
+        <textarea id="editor" aria-label="記事本編輯區" placeholder="開始輸入您的筆記..."><?!= esc_(note.content || '') ?></textarea>
       </div>
       <div class="bottom-bar">
         <div id="status">最後修改時間：<?!= note.updated || '尚未建立' ?></div>
@@ -65,13 +65,11 @@
   </div>
 
   <script>
-    var initialContent = <?!= JSON.stringify(note.content || '') ?>;
-    var initialUpdated = <?!= JSON.stringify(note.updated || '') ?>;
+    var initialUpdated = <?!= JSON.stringify(note.updated || '').replace(/</g, '\\u003c') ?>;
     var editor = document.getElementById('editor');
     var statusEl = document.getElementById('status');
     var saveStateEl = document.getElementById('saveState');
     var saveBtn = document.getElementById('saveBtn');
-    editor.value = initialContent;
     function setSaveState(text, color){ saveStateEl.textContent = text; saveStateEl.parentElement.querySelector('.dot').style.background = color; }
     function setStatus(text){ statusEl.textContent = text; }
     function markDirty(){ setSaveState('未保存', '#f59e0b'); }
@@ -86,7 +84,7 @@
       }).withFailureHandler(function(err){
         saveBtn.disabled = false;
         setSaveState('儲存失敗', '#ef4444');
-        setStatus('儲存失敗：' + err.message);
+        setStatus('儲存失敗：' + (err && err.message ? err.message : String(err)));
       }).saveNote(content);
     }
     editor.addEventListener('input', markDirty);
