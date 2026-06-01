@@ -1,0 +1,142 @@
+// 單一檔案 Google Apps Script - 雲端記事本
+const FOLDER_ID = '1I3k3jWlV5XfVT-La-J5ewmbJ_JN-WcBY';
+const FILE_NAME = '記事本.txt';
+
+function doGet(e) {
+  const html = `
+  <!doctype html>
+  <html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>雲端記事本</title>
+    <style>
+      :root{--bg:#0f0f12;--card:#141416;--accent:#7a6df0;--muted:#9aa0a6;--text:#e7e9ee}
+      html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b0b0e, #0f0f12);color:var(--text);font-family:system-ui,Segoe UI,Microsoft JhengHei,Helvetica,Arial}
+      .wrap{max-width:1000px;margin:28px auto;padding:20px}
+      .header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+      .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#9b8df7,#6bd3ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff}
+      h1{font-size:18px;margin:0}
+      .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+      textarea{width:100%;height:360px;background:#222226;border-radius:10px;padding:18px;color:var(--text);border:2px solid rgba(122,109,240,0.18);outline:none;resize:vertical;font-size:15px;line-height:1.5}
+      .row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:12px}
+      .status{color:var(--muted);font-size:14px}
+      .btn{background:linear-gradient(90deg,#7a6df0,#9b8df7);border:none;color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;cursor:pointer;box-shadow:0 6px 18px rgba(122,109,240,0.18)}
+      .btn[disabled]{opacity:0.5;cursor:default}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="header">
+        <div class="logo">☁️</div>
+        <div><h1>雲端記事本</h1><div style="color:var(--muted);font-size:13px">檔案：${FILE_NAME}</div></div>
+      </div>
+
+      <div class="card">
+        <textarea id="editor" placeholder="開始輸入您的筆記..." spellcheck="false"></textarea>
+        <div class="row">
+          <div class="status" id="status">載入中…</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="saveBtn" class="btn" disabled>Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let originalContent = '';
+      const editor = document.getElementById('editor');
+      const statusEl = document.getElementById('status');
+      const saveBtn = document.getElementById('saveBtn');
+
+      function fmtTime(iso){
+        try{
+          const d = new Date(iso);
+          return d.toLocaleString();
+        }catch(e){return iso}
+      }
+
+      function setSavedState(saved){
+        if(saved){
+          statusEl.textContent = '已儲存 • 最後修改：' + fmtTime(saved);
+          saveBtn.disabled = true;
+        } else {
+          statusEl.textContent = '未儲存';
+          saveBtn.disabled = false;
+        }
+      }
+
+      function loadContent(){
+        google.script.run.withSuccessHandler(res=>{
+          originalContent = res.content || '';
+          editor.value = originalContent;
+          setSavedState(res.lastUpdated || '');
+          saveBtn.disabled = true;
+        }).withFailureHandler(err=>{
+          statusEl.textContent = '讀取失敗';
+          console.error(err);
+        }).getContent();
+      }
+
+      editor.addEventListener('input', ()=>{
+        const changed = editor.value !== originalContent;
+        if(changed) statusEl.textContent = '未儲存';
+        saveBtn.disabled = !changed;
+      });
+
+      saveBtn.addEventListener('click', ()=>{
+        const content = editor.value;
+        saveBtn.disabled = true;
+        statusEl.textContent = '儲存中…';
+        google.script.run.withSuccessHandler(res=>{
+          originalContent = content;
+          setSavedState(res.lastUpdated || new Date().toISOString());
+        }).withFailureHandler(err=>{
+          statusEl.textContent = '儲存錯誤';
+          console.error(err);
+          saveBtn.disabled = false;
+        }).saveContent(content);
+      });
+
+      // load on ready
+      document.addEventListener('DOMContentLoaded', loadContent);
+    </script>
+  </body>
+  </html>
+  `;
+  return HtmlService.createHtmlOutput(html).setTitle('雲端記事本');
+}
+
+// 取得或建立檔案
+function _getFile() {
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const files = folder.getFilesByName(FILE_NAME);
+  if (files.hasNext()) return files.next();
+  return folder.createFile(FILE_NAME, '');
+}
+
+// 供前端載入內容與最後修改時間
+function getContent() {
+  const file = _getFile();
+  const blob = file.getBlob();
+  const text = blob.getDataAsString();
+  const lastUpdated = file.getLastUpdated();
+  return {
+    content: text,
+    lastUpdated: lastUpdated ? lastUpdated.toISOString() : ''
+  };
+}
+
+// 儲存內容（使用鎖避免競爭）
+function saveContent(content) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const file = _getFile();
+    file.setContent(content);
+    const last = file.getLastUpdated();
+    return { success: true, lastUpdated: last ? last.toISOString() : '' };
+  } finally {
+    try { lock.releaseLock(); } catch(e){}
+  }
+}
