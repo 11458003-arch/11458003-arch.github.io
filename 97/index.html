@@ -32,6 +32,7 @@
   <div class="container">
     <div style="text-align: center; margin-bottom: 24px; font-size: 24px;">
       <div style="color: #DC143C; font-weight: bold; letter-spacing: 2px;">Yi chun ❤️ Peichen</div>
+      <div id="loveInfo" style="color:#B22222; margin-top:8px; font-size:16px;">我們相愛的那一天：2026-05-23 ・ 經過 0 天</div>
     </div>
     <h1>計算天數</h1>
     
@@ -57,41 +58,61 @@
     <div class="videos-grid">
       <div class="video-item">
         <h3>影片 1</h3>
-        <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/1.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
         <div class="video-controls" style="margin-top:8px;">
           <button class="play-toggle" data-index="0">播放</button>
+          <a href="videos/1.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
       <div class="video-item">
         <h3>影片 2</h3>
-        <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/2.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
         <div class="video-controls" style="margin-top:8px;">
           <button class="play-toggle" data-index="1">播放</button>
+          <a href="videos/2.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
       <div class="video-item">
         <h3>影片 3</h3>
-        <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/3.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
         <div class="video-controls" style="margin-top:8px;">
           <button class="play-toggle" data-index="2">播放</button>
+          <a href="videos/3.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
+    <script>
     // 設定今天日期為預設
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('endDate').value = today;
+
+    // 我們相愛的那一天（固定）
+    const loveDateStr = '2026-05-23';
+    function updateLoveInfo() {
+      const loveElem = document.getElementById('loveInfo');
+      if (!loveElem) return;
+      const now = new Date();
+      const loveDate = new Date(loveDateStr);
+      // 計算整天差（不計時間），只比較年月日部分
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const loveMidnight = new Date(loveDate.getFullYear(), loveDate.getMonth(), loveDate.getDate());
+      const diffDays = Math.floor((todayMidnight - loveMidnight) / (1000 * 60 * 60 * 24));
+      const displayDays = diffDays >= 0 ? diffDays : 0;
+      loveElem.textContent = `我們相愛的那一天：${loveDateStr} ・ 經過 ${displayDays} 天`;
+    }
+
+    updateLoveInfo();
 
     function calculateDays() {
       const startInput = document.getElementById('startDate').value;
