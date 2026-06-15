@@ -36,18 +36,10 @@
     </div>
     <h1>計算天數</h1>
     
-    <div class="form-group">
-      <label for="startDate">開始日期（固定）：</label>
-      <input type="date" id="startDate" value="2026-05-23" disabled />
-      <div style="font-size:12px;color:#B22222;margin-top:6px;">固定開始時間：2026-05-23</div>
+    <div style="text-align:center; margin:8px 0 12px 0;">
+      <div style="font-size:14px;color:#B22222;">固定開始時間：2026-05-23</div>
+      <button onclick="calculateDays()" style="margin-top:8px;padding:8px 12px;background:#DC143C;color:#fff;border:none;border-radius:4px;">顯示已過天數</button>
     </div>
-    
-    <div class="form-group">
-      <label for="endDate">結束日期：</label>
-      <input type="date" id="endDate" />
-    </div>
-    
-    <button onclick="calculateDays()">計算天數</button>
     
     <div id="resultDiv" style="display:none;" class="result">
       <div class="result-text" id="resultText"></div>
@@ -97,14 +89,8 @@
     <script>
     // 設定今天日期為預設
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('endDate').value = today;
     // 固定開始時間為 2026-05-23
     const fixedStart = '2026-05-23';
-    const startEl = document.getElementById('startDate');
-    if (startEl) {
-      startEl.value = fixedStart;
-      startEl.disabled = true; // 確保使用者無法更改
-    }
 
     // 我們相愛的那一天（固定）
     const loveDateStr = '2026-05-23';
@@ -124,35 +110,16 @@
     updateLoveInfo();
 
     function calculateDays() {
-      const startInput = document.getElementById('startDate').value;
-      const endInput = document.getElementById('endDate').value;
-
-      if (!startInput || !endInput) {
-        alert('請選擇開始日期和結束日期');
-        return;
-      }
-
-      const startDate = new Date(startInput);
-      const endDate = new Date(endInput);
-
-      if (startDate > endDate) {
-        alert('開始日期不能晚於結束日期');
-        return;
-      }
-
+      const startDate = new Date(fixedStart);
+      const endDate = new Date();
       const timeDiff = endDate - startDate;
       const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
 
       const resultDiv = document.getElementById('resultDiv');
       const resultText = document.getElementById('resultText');
-      resultText.textContent = `從 ${startInput} 到 ${endInput}，共經過 ${daysDiff + 1} 天`;
+      resultText.textContent = `從 ${fixedStart} 到 ${today}，共經過 ${daysDiff + 1} 天`;
       resultDiv.style.display = 'block';
     }
-
-    // 按 Enter 鍵計算
-    document.getElementById('endDate').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') calculateDays();
-    });
   </script>
 
   <script>
