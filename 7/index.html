@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>英文單字選擇題測驗</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 760px;
+      margin: 20px auto;
+      padding: 0 16px;
+      line-height: 1.5;
+    }
+    h1 { font-size: 22px; margin-bottom: 8px; }
+    .meta { margin: 8px 0 16px; color: #444; }
+    .question { margin: 18px 0; }
+    .choices button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #f8f8f8;
+      text-align: left;
+      cursor: pointer;
+    }
+    .choices button.correct { background: #c8e6c9; border-color: #388e3c; }
+    .choices button.wrong { background: #ffcdd2; border-color: #c62828; }
+    #controls { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    button { font-size: 16px; }
+    #status { margin-top: 14px; font-weight: 600; }
+    #error { margin-top: 14px; color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>英文單字選擇題測驗</h1>
+  <div class="meta">規則：固定 25 題，每題 4 分，四選一。</div>
+
+  <button id="start">開始測驗</button>
+
+  <div id="quiz" style="display:none">
+    <div id="progress"></div>
+    <div class="question">
+      <div id="prompt" style="font-weight:600;margin:8px 0 8px"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+    <div id="controls">
+      <button id="next" disabled>下一題</button>
+      <button id="restart">重新開始</button>
+    </div>
+    <div id="status"></div>
+  </div>
+
+  <div id="error"></div>
+
+  <script>
+    const quizSize = 25;
+    const pointsPerQuestion = 4;
+    let vocab = [];
+    let questions = [];
+    let current = 0;
+    let correctCount = 0;
+    let answered = false;
+
+    const startBtn = document.getElementById('start');
+    const restartBtn = document.getElementById('restart');
+    const quizDiv = document.getElementById('quiz');
+    const promptEl = document.getElementById('prompt');
+    const choicesEl = document.getElementById('choices');
+    const progressEl = document.getElementById('progress');
+    const nextBtn = document.getElementById('next');
+    const statusEl = document.getElementById('status');
+    const errorEl = document.getElementById('error');
+
+    function shuffle(array) {
+      const items = array.slice();
+      for (let index = items.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [items[index], items[swapIndex]] = [items[swapIndex], items[index]];
+      }
+      return items;
+    }
+
+    function makeChoices(correct) {
+      const wrongChoices = shuffle(vocab.filter(item => item.en !== correct).map(item => item.en)).slice(0, 3);
+      return shuffle([correct, ...wrongChoices]);
+    }
+
+    function renderQuestion() {
+      const question = questions[current];
+      progressEl.textContent = `第 ${current + 1} 題 / 共 ${quizSize} 題`;
+      promptEl.textContent = question.zh;
+      choicesEl.innerHTML = '';
+      nextBtn.disabled = true;
+
+      const choices = makeChoices(question.en);
+      choices.forEach(choice => {
+        const button = document.createElement('button');
+        button.textContent = choice;
+        button.onclick = () => {
+          if (answered) return;
+          answered = true;
+          if (choice === question.en) {
+            button.classList.add('correct');
+            correctCount += 1;
+          } else {
+            button.classList.add('wrong');
+            Array.from(choicesEl.children).forEach(item => {
+              if (item.textContent === question.en) item.classList.add('correct');
+            });
+          }
+          const score = correctCount * pointsPerQuestion;
+          statusEl.innerHTML = `目前得分：${score} / ${quizSize * pointsPerQuestion}<br>正確配對：${question.zh} — ${question.en}`;
+          nextBtn.disabled = false;
+        };
+        choicesEl.appendChild(button);
+      });
+    }
+
+    function startQuiz() {
+      if (vocab.length < quizSize) {
+        errorEl.textContent = '詞庫數量不足，無法建立 25 題測驗。';
+        return;
+      }
+      errorEl.textContent = '';
+      questions = shuffle(vocab).slice(0, quizSize);
+      current = 0;
+      correctCount = 0;
+      answered = false;
+      quizDiv.style.display = 'block';
+      statusEl.textContent = '';
+      renderQuestion();
+    }
+
+    nextBtn.onclick = () => {
+      if (current < quizSize - 1) {
+        current += 1;
+        answered = false;
+        renderQuestion();
+      } else {
+        statusEl.textContent = `測驗結束。總分：${correctCount * pointsPerQuestion} / ${quizSize * pointsPerQuestion}`;
+        nextBtn.disabled = true;
+      }
+    };
+
+    startBtn.onclick = startQuiz;
+    restartBtn.onclick = startQuiz;
+
+    async function loadVocabulary() {
+      try {
+        const response = await fetch('./vocab_list.md');
+        if (!response.ok) throw new Error(`無法讀取詞庫：${response.status}`);
+        const text = await response.text();
+        const rows = text.split(/\r?\n/);
+        const items = [];
+
+        for (const row of rows) {
+          const match = row.match(/^\|\s*(\d+)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*$/);
+          if (!match) continue;
+          const id = Number(match[1]);
+          const zh = match[2];
+          const en = match[3];
+          if (!Number.isNaN(id) && zh && en && zh !== '中文' && en !== 'English') {
+            items.push({ id, zh, en });
+          }
+        }
+
+        vocab = items;
+        if (vocab.length === 0) {
+          throw new Error('詞庫解析失敗。');
+        }
+      } catch (error) {
+        errorEl.textContent = `載入詞庫失敗：${error.message}`;
+        startBtn.disabled = true;
+        restartBtn.disabled = true;
+      }
+    }
+
+    loadVocabulary();
+  </script>
+</body>
+</html>
