@@ -57,11 +57,12 @@
     <h2 style="color: #DC143C; margin-top: 32px;">影片集</h2>
     <div style="text-align:center; margin:10px 0 0 0;">
       <button id="autoplayBtn" style="padding:8px 12px; background:#DC143C; color:#fff; border:none; border-radius:4px; cursor:pointer;">一鍵自動播放（靜音）</button>
+      <button id="unmuteBtn" style="padding:8px 12px; margin-left:8px; background:#fff; color:#DC143C; border:2px solid #DC143C; border-radius:4px; cursor:pointer;">解除靜音並播放聲音</button>
     </div>
     <div class="videos-grid">
       <div class="video-item">
         <h3>影片 1</h3>
-        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted poster="/assets/snake-thumb.svg" width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/1.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -71,7 +72,7 @@
       </div>
       <div class="video-item">
         <h3>影片 2</h3>
-        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted poster="/assets/whac-a-mole-thumb.svg" width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/2.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -81,7 +82,7 @@
       </div>
       <div class="video-item">
         <h3>影片 3</h3>
-        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted poster="/assets/snake-thumb.svg" width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/3.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -176,6 +177,37 @@
           await tryAutoplayAll();
         });
       }
+
+      // 解除靜音按鈕（需要使用者互動）
+      const unmuteBtn = document.getElementById('unmuteBtn');
+      async function unmuteAndPlay(targetIndex = 0) {
+        if (!videos.length) return;
+        // 解除靜音
+        videos.forEach(v => v.muted = false);
+        // 播放指定影片（或第一支）
+        try {
+          await videos[targetIndex].play();
+        } catch (e) {
+          // 若播放被阻擋，忽略
+        }
+      }
+
+      if (unmuteBtn) {
+        unmuteBtn.addEventListener('click', async () => {
+          await unmuteAndPlay(0);
+          unmuteBtn.textContent = '已解除靜音';
+        });
+      }
+
+      // 點擊任一影片本體，也解除靜音並播放該影片（視為使用者互動）
+      videos.forEach((v, idx) => {
+        v.addEventListener('click', async () => {
+          if (v.muted) {
+            v.muted = false;
+          }
+          try { await v.play(); } catch (e) {}
+        });
+      });
     })();
   </script>
 </body>
