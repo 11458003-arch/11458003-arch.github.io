@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>計算天數</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      max-width: 760px;
+      margin: 20px auto;
+      padding: 0 16px;
+      line-height: 1.5;
+      background: #FFB6C1;
+      color: #DC143C;
+    }
+    h1 { font-size: 24px; margin-bottom: 16px; color: #DC143C; }
+    .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; color: #DC143C; }
+    input { width: 100%; padding: 8px; border: 2px solid #DC143C; border-radius: 4px; font-size: 16px; box-sizing: border-box; }
+    button { padding: 10px 20px; background: #DC143C; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #B22222; }
+    .result { margin-top: 20px; padding: 16px; background: #FFE4E1; border-left: 4px solid #DC143C; border-radius: 4px; }
+    .result-text { font-size: 18px; font-weight: bold; color: #DC143C; }
+    .videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 16px; }
+    .video-item { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .video-item h3 { color: #DC143C; margin: 0 0 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div style="text-align: center; margin-bottom: 24px; font-size: 24px;">
+      <div style="color: #DC143C; font-weight: bold; letter-spacing: 2px;">Yi chun ❤️ Peichen</div>
+    </div>
+    <h1>計算天數</h1>
+    
+    <div class="form-group">
+      <label for="startDate">開始日期：</label>
+      <input type="date" id="startDate" />
+    </div>
+    
+    <div class="form-group">
+      <label for="endDate">結束日期：</label>
+      <input type="date" id="endDate" />
+    </div>
+    
+    <button onclick="calculateDays()">計算天數</button>
+    
+    <div id="resultDiv" style="display:none;" class="result">
+      <div class="result-text" id="resultText"></div>
+    </div>
+
+    <hr style="margin: 32px 0; border: 1px solid #DC143C;">
+
+    <h2 style="color: #DC143C; margin-top: 32px;">影片集</h2>
+    <div class="videos-grid">
+      <div class="video-item">
+        <h3>影片 1</h3>
+        <video width="100%" height="auto" controls style="border-radius: 4px; border: 2px solid #DC143C;">
+          <source src="videos/1.mp4" type="video/mp4">
+          您的瀏覽器不支援 HTML5 影片。
+        </video>
+      </div>
+      <div class="video-item">
+        <h3>影片 2</h3>
+        <video width="100%" height="auto" controls style="border-radius: 4px; border: 2px solid #DC143C;">
+          <source src="videos/2.mp4" type="video/mp4">
+          您的瀏覽器不支援 HTML5 影片。
+        </video>
+      </div>
+      <div class="video-item">
+        <h3>影片 3</h3>
+        <video width="100%" height="auto" controls style="border-radius: 4px; border: 2px solid #DC143C;">
+          <source src="videos/3.mp4" type="video/mp4">
+          您的瀏覽器不支援 HTML5 影片。
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 設定今天日期為預設
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('endDate').value = today;
+
+    function calculateDays() {
+      const startInput = document.getElementById('startDate').value;
+      const endInput = document.getElementById('endDate').value;
+
+      if (!startInput || !endInput) {
+        alert('請選擇開始日期和結束日期');
+        return;
+      }
+
+      const startDate = new Date(startInput);
+      const endDate = new Date(endInput);
+
+      if (startDate > endDate) {
+        alert('開始日期不能晚於結束日期');
+        return;
+      }
+
+      const timeDiff = endDate - startDate;
+      const daysDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+
+      const resultDiv = document.getElementById('resultDiv');
+      const resultText = document.getElementById('resultText');
+      resultText.textContent = `從 ${startInput} 到 ${endInput}，共經過 ${daysDiff + 1} 天`;
+      resultDiv.style.display = 'block';
+    }
+
+    // 按 Enter 鍵計算
+    document.getElementById('endDate').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') calculateDays();
+    });
+  </script>
+</body>
+</html>
