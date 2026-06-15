@@ -55,10 +55,13 @@
     <hr style="margin: 32px 0; border: 1px solid #DC143C;">
 
     <h2 style="color: #DC143C; margin-top: 32px;">影片集</h2>
+    <div style="text-align:center; margin:10px 0 0 0;">
+      <button id="autoplayBtn" style="padding:8px 12px; background:#DC143C; color:#fff; border:none; border-radius:4px; cursor:pointer;">一鍵自動播放（靜音）</button>
+    </div>
     <div class="videos-grid">
       <div class="video-item">
         <h3>影片 1</h3>
-        <video controls playsinline width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/1.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -68,7 +71,7 @@
       </div>
       <div class="video-item">
         <h3>影片 2</h3>
-        <video controls playsinline width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/2.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -78,7 +81,7 @@
       </div>
       <div class="video-item">
         <h3>影片 3</h3>
-        <video controls playsinline width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
+        <video controls playsinline muted width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
           <source src="videos/3.mp4" type="video/mp4">
           您的瀏覽器不支援 HTML5 影片。
         </video>
@@ -142,6 +145,39 @@
       if (e.key === 'Enter') calculateDays();
     });
   </script>
-  
+</script>
+
+  <script>
+    // 改善行動裝置 autoplay：嘗試啟動所有影片（靜音），並提供按鈕讓使用者手動觸發
+    (function() {
+      const videos = Array.from(document.querySelectorAll('.videos-grid video'));
+      const btn = document.getElementById('autoplayBtn');
+
+      async function tryAutoplayAll() {
+        if (!videos.length) return;
+        for (const v of videos) {
+          try {
+            v.muted = true;
+            // 某些瀏覽器需要設定 playsinline 與 muted 才允許自動播放
+            await v.play();
+          } catch (e) {
+            // 忽略播放錯誤（瀏覽器可能仍然阻擋自動播放）
+          }
+        }
+        if (btn) btn.textContent = '已啟動（靜音）';
+      }
+
+      // 嘗試在載入後自動播放（多數行動裝置會允許靜音自動播放）
+      window.addEventListener('load', () => {
+        tryAutoplayAll();
+      });
+
+      if (btn) {
+        btn.addEventListener('click', async () => {
+          await tryAutoplayAll();
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
