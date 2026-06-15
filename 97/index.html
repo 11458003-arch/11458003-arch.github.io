@@ -58,35 +58,38 @@
     <div class="videos-grid">
       <div class="video-item">
         <h3>影片 1</h3>
-        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
-          <source src="videos/1.mp4" type="video/mp4">
-          您的瀏覽器不支援 HTML5 影片。
-        </video>
+        <a href="videos/1.mp4" target="_blank" rel="noopener" aria-label="在新分頁播放 影片 1">
+          <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata" muted>
+            <source src="videos/1.mp4" type="video/mp4">
+            您的瀏覽器不支援 HTML5 影片。
+          </video>
+        </a>
         <div class="video-controls" style="margin-top:8px;">
-          <button class="play-toggle" data-index="0">播放</button>
-          <a href="videos/1.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
+          <a href="videos/1.mp4" target="_blank" rel="noopener" style="color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
       <div class="video-item">
         <h3>影片 2</h3>
-        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
-          <source src="videos/2.mp4" type="video/mp4">
-          您的瀏覽器不支援 HTML5 影片。
-        </video>
+        <a href="videos/2.mp4" target="_blank" rel="noopener" aria-label="在新分頁播放 影片 2">
+          <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata" muted>
+            <source src="videos/2.mp4" type="video/mp4">
+            您的瀏覽器不支援 HTML5 影片。
+          </video>
+        </a>
         <div class="video-controls" style="margin-top:8px;">
-          <button class="play-toggle" data-index="1">播放</button>
-          <a href="videos/2.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
+          <a href="videos/2.mp4" target="_blank" rel="noopener" style="color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
       <div class="video-item">
         <h3>影片 3</h3>
-        <video controls width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata">
-          <source src="videos/3.mp4" type="video/mp4">
-          您的瀏覽器不支援 HTML5 影片。
-        </video>
+        <a href="videos/3.mp4" target="_blank" rel="noopener" aria-label="在新分頁播放 影片 3">
+          <video width="100%" height="auto" style="border-radius: 4px; border: 2px solid #DC143C;" preload="metadata" muted>
+            <source src="videos/3.mp4" type="video/mp4">
+            您的瀏覽器不支援 HTML5 影片。
+          </video>
+        </a>
         <div class="video-controls" style="margin-top:8px;">
-          <button class="play-toggle" data-index="2">播放</button>
-          <a href="videos/3.mp4" target="_blank" rel="noopener" style="margin-left:10px; color:#DC143C;">在新分頁播放</a>
+          <a href="videos/3.mp4" target="_blank" rel="noopener" style="color:#DC143C;">在新分頁播放</a>
         </div>
       </div>
     </div>
@@ -145,43 +148,6 @@
       if (e.key === 'Enter') calculateDays();
     });
   </script>
-  <script>
-    // Custom play/pause controls for videos
-    (function() {
-      const videoItems = Array.from(document.querySelectorAll('.video-item video'));
-      const buttons = Array.from(document.querySelectorAll('.play-toggle'));
-
-      function updateButton(index) {
-        const vid = videoItems[index];
-        const btn = buttons[index];
-        if (!vid || !btn) return;
-        btn.textContent = vid.paused ? '播放' : '暫停';
-      }
-
-      buttons.forEach((btn, idx) => {
-        btn.addEventListener('click', () => {
-          const vid = videoItems[idx];
-          if (!vid) return;
-          if (vid.paused) {
-            // pause others
-            videoItems.forEach((v, i) => {
-              if (i !== idx) v.pause();
-            });
-            vid.play();
-          } else {
-            vid.pause();
-          }
-          updateButton(idx);
-        });
-      });
-
-      // keep buttons in sync with playback state
-      videoItems.forEach((v, idx) => {
-        v.addEventListener('play', () => updateButton(idx));
-        v.addEventListener('pause', () => updateButton(idx));
-        v.addEventListener('ended', () => updateButton(idx));
-      });
-    })();
-  </script>
+  
 </body>
 </html>
